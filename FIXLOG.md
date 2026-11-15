@@ -146,3 +146,14 @@ Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that cou
 - New [testing/](testing/README.md): scripts that build vanilla 1.5.97 and 1.7.104 installs from Steam depots in `C:\SkyrimTest`, and run a test with the main setup's profile folders (INIs, saves, Plugins.txt) renamed aside and restored after.
 
 **Risks to test:** clicking an NPC in the console to select it while the mouse is free; the console opened over another watched menu; the plugin loading at all on 1.5.97 and 1.7.104.
+
+## Round 10 (2026-11-15): hold the cursor in the window during play
+
+**Found in the first 1.5.97 test (vanilla):** console and all menus worked. But during play, scrolling zoomed the camera and also scrolled a window on the second screen, with no cursor showing, whether or not a door had just been used. The door's black screen not freeing the mouse is expected: the loading screen menu was open for only 0.15 to 0.4 s, and the longer black part is `Fader Menu`, which isn't watched.
+
+**Cause (measured):** sampling the Windows cursor during play showed it hidden, unclipped (clip = whole desktop) and following the mouse, pinned at the desktop's left edge. Turned far enough right, it crosses onto the second screen, and Windows sends wheel messages to the window under it. A run with `bReleaseMouse=0` (`Run-Test.ps1 -PluginOff`) scrolled the second screen too, so vanilla 1.5.97 does this without the plugin. The main setup (1.6.1170) holds the cursor at the screen center during play even with Display Tweaks' `LockCursor = false`. The README tells users to turn that lock off, so users following it on 1.5.97 hit this.
+
+**Change**
+- New setting `bLockCursorInPlay` (default 1). During play, while the game window is in front, the cursor is confined to the window's client area (`ClipCursor`), checked every Poll. `FreeMouse` already removes clips; it now also clears the lock flag. Losing focus (`WM_ACTIVATEAPP`) releases the lock, and the Poll hook re-checks focus right after clipping so the lock never follows the user to another program. *New*, next to the Round 7 rule that removes clips while free; it doesn't change any earlier fix.
+
+**Risks to test:** alt-tab during play (the cursor must move freely in other programs); quitting the game from play.

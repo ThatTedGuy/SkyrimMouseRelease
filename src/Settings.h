@@ -18,6 +18,11 @@ struct Settings
 	// Menus that free the mouse, by Skyrim's internal menu name (case-sensitive).
 	std::vector<std::string> menus{ "Journal Menu", "Main Menu", "RaceSex Menu", "Loading Menu", "InventoryMenu", "MagicMenu", "StatsMenu", "Console" };
 
+	// On: during play, keep the hidden Windows cursor inside the game window while the game is in
+	// front. Without it, vanilla 1.5.97 lets the cursor drift onto another screen, where Windows
+	// sends it the mouse wheel.
+	bool lockCursorInPlay{ true };
+
 	// DirectInput flags given back to the game when the last watched menu closes.
 	// 0x5 = exclusive + foreground, which is what Skyrim uses.
 	std::uint32_t restoreFlags{ 0x5 };

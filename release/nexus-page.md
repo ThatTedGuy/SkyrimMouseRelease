@@ -47,7 +47,7 @@ Change on the live page once the 1.5.97 and 1.7.104 tests pass:
 - Description, "Works in" line: add "and the console".
 - Description, requirements: replace the runtime line with "Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all", and say to get the SKSE build and Address Library file that match the game version.
 - Requirements tab, Address Library note: "Get the All in One file. It covers every game version, 1.5.97 included."
-- Changelog: 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7.
+- Changelog: 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens.
 
 ## Releasing an update
 

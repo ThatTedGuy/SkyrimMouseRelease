@@ -51,6 +51,7 @@ namespace
 	std::atomic_bool g_refreeNeeded{ false };     // the game reset the device or regained focus while free
 	std::atomic_bool g_retryNow{ false };         // focus came back: retry a failed switch without waiting
 	std::atomic_bool g_gameCursorShown{ false };  // Skyrim draws its own cursor ("Cursor Menu" is open)
+	std::atomic_bool g_lockedInPlay{ false };     // we confined the cursor to the window for play
 
 	// Posted to the game window after the mouse goes back to the game: hide the Windows cursor.
 	constexpr UINT kHideCursorMessage = WM_APP + 0x4D52;
@@ -229,6 +230,7 @@ namespace
 			g_blockedInputs = 0;
 		}
 		::ClipCursor(nullptr);
+		g_lockedInPlay = false;
 		g_freeDevice = a_mouse->dInputDevice;
 		g_isFree = true;
 		g_clipLogged = false;
@@ -382,6 +384,39 @@ namespace
 		g_visibleCursorLogged = visible;
 	}
 
+	// During play the Windows cursor is hidden but still follows the mouse. Some runtimes (vanilla
+	// 1.5.97) don't hold it anywhere, so it can drift onto another screen, where Windows sends it the
+	// wheel turns. Confine it to the game window while the game is in front. FreeMouse and focus loss
+	// (WindowProc) release it.
+	void LockCursorInPlay()
+	{
+		if (!Settings::Get().lockCursorInPlay || !g_window || ::GetForegroundWindow() != g_window) {
+			return;
+		}
+		RECT client{};
+		if (!::GetClientRect(g_window, &client) || client.right <= 0 || client.bottom <= 0) {
+			return;
+		}
+		POINT topLeft{ 0, 0 };
+		POINT bottomRight{ client.right, client.bottom };
+		::ClientToScreen(g_window, &topLeft);
+		::ClientToScreen(g_window, &bottomRight);
+		const RECT target{ topLeft.x, topLeft.y, bottomRight.x, bottomRight.y };
+
+		RECT current{};
+		if (::GetClipCursor(&current) && ::EqualRect(&current, &target)) {
+			return;
+		}
+		::ClipCursor(&target);
+		if (!g_lockedInPlay.exchange(true)) {
+			SKSE::log::debug("Cursor held in the game window for play");
+		}
+		// Focus may have left between the check above and the clip; don't trap the cursor then.
+		if (::GetForegroundWindow() != g_window && g_lockedInPlay.exchange(false)) {
+			::ClipCursor(nullptr);
+		}
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	// Per-frame update, called from the Poll hook
 	// ---------------------------------------------------------------------------------------------
@@ -409,6 +444,7 @@ namespace
 			return;
 		}
 		if (!isFree) {
+			LockCursorInPlay();
 			LogVisibleCursor();
 			return;
 		}
@@ -474,7 +510,8 @@ namespace
 	using ReinitializeHook = DeviceResetHook<kReinitializeSlot>;
 
 	// Subclasses the game window for two messages:
-	//  - WM_ACTIVATEAPP: focus came back, so free the mouse again and retry anything that failed.
+	//  - WM_ACTIVATEAPP: focus came back, so free the mouse again and retry anything that failed;
+	//    focus left, so release the play lock.
 	//  - WM_SETCURSOR: over the game, show exactly one cursor. While free, that's Skyrim's own if it
 	//    draws one (no Windows cursor), otherwise the Windows arrow (loading screens).
 	// It also handles kHideCursorMessage, posted after the mouse goes back to the game.
@@ -488,6 +525,8 @@ namespace
 				if (g_wantFree) {
 					g_refreeNeeded = true;
 				}
+			} else if (g_lockedInPlay.exchange(false)) {
+				::ClipCursor(nullptr);  // the play lock must not follow the user to other programs
 			}
 			break;
 

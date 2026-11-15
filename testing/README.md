@@ -48,6 +48,7 @@ From the main menu, open the console (`~`) and type `coc riverwood` to skip the 
 5. **Loading screen:** `coc whiterun` with the mouse on the other monitor. No arrow in play afterwards.
 6. **Pause, inventory, magic, skills:** each frees the mouse, and items, spells and constellations still turn.
 7. **Character creator:** `showracemenu`, turn the character, move out and back, close.
-8. Quit from the pause menu.
+8. **Play lock:** in third person, turn the camera a long way in both directions, then scroll. Only the game zooms; nothing on the other screen scrolls. Alt-tab out: the mouse moves freely in other programs.
+9. Quit from the pause menu.
 
 The log should have no warning (`[W]`) or error (`[E]`) lines.

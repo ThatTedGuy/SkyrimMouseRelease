@@ -87,6 +87,8 @@ void Settings::Load()
 			releaseMouse = ParseBool(value, releaseMouse);
 		} else if (key == "bVerboseLog") {
 			verboseLog = ParseBool(value, verboseLog);
+		} else if (key == "bLockCursorInPlay") {
+			lockCursorInPlay = ParseBool(value, lockCursorInPlay);
 		} else if (key == "sMenus") {
 			menus = SplitList(value);
 		} else if (key == "iRestoreFlags") {
@@ -110,7 +112,7 @@ void Settings::Load()
 	for (const auto& menu : menus) {
 		menuList += menuList.empty() ? menu : ", " + menu;
 	}
-	SKSE::log::info("Settings: bReleaseMouse={}, sMenus=[{}], iRestoreFlags={}, bVerboseLog={}", releaseMouse, menuList, restoreFlags, verboseLog);
+	SKSE::log::info("Settings: bReleaseMouse={}, sMenus=[{}], bLockCursorInPlay={}, iRestoreFlags={}, bVerboseLog={}", releaseMouse, menuList, lockCursorInPlay, restoreFlags, verboseLog);
 }
 
 bool Settings::IsWatchedMenu(std::string_view a_menu) const
