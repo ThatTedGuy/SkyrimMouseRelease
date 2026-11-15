@@ -1,6 +1,6 @@
-#include "Settings.h"
+// Reads the INI. A small hand parser: key=value lines, ';' or '#' comments, sections ignored.
 
-#include "SKSE/SKSE.h"
+#include "Settings.h"
 
 #include <algorithm>
 #include <cctype>
@@ -9,7 +9,7 @@
 
 namespace
 {
-	constexpr auto kIniPath = "Data/SKSE/Plugins/SkyrimMouseRelease.ini";
+	constexpr auto kIniPath = "Data/SKSE/Plugins/SkyrimMouseRelease.ini";  // relative to the game folder
 
 	std::string Trim(std::string_view a_text)
 	{
@@ -90,18 +90,22 @@ void Settings::Load()
 			std::uint32_t parsed{};
 			if (std::from_chars(value.data(), value.data() + value.size(), parsed).ec == std::errc{}) {
 				restoreFlags = parsed;
+			} else {
+				SKSE::log::warn("iRestoreFlags '{}' is not a number; using {}", value, restoreFlags);
 			}
 		}
+	}
+
+	// SKSE created the log at info level; debug lines only appear with bVerboseLog.
+	if (auto logger = spdlog::default_logger()) {
+		const auto level = verboseLog ? spdlog::level::debug : spdlog::level::info;
+		logger->set_level(level);
+		logger->flush_on(level);
 	}
 
 	std::string menuList;
 	for (const auto& menu : menus) {
 		menuList += menuList.empty() ? menu : ", " + menu;
-	}
-	if (auto logger = spdlog::default_logger()) {
-		const auto level = verboseLog ? spdlog::level::debug : spdlog::level::info;
-		logger->set_level(level);
-		logger->flush_on(level);
 	}
 	SKSE::log::info("Settings: bReleaseMouse={}, sMenus=[{}], iRestoreFlags={}, bVerboseLog={}", releaseMouse, menuList, restoreFlags, verboseLog);
 }

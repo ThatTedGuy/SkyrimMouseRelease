@@ -102,3 +102,16 @@ Not changed: missing Address Library (CommonLib's standard error; list it as a r
 **Test 9 result (1.6.1170):** all passed. Pause menu, inventory and loading screens work; scrolling and clicking on the other monitor did nothing in the inventory; the default log is 42 lines for the session. One log bug: the "Blocked N clicks or scrolls" count never printed, because every re-apply after refocus reset the count. Fixed by resetting it only when a menu opens (Round 7 code, same commit area; not a new mechanism).
 
 **1.7.x decision:** not tested. The user's collection reaches 1.6.1170 through Skyrim Runtime Swapper, which patches the 1.7.104 game at launch and reverts it on exit, and only SKSE for 1.6.1170 is installed; testing 1.7.104 would mean changing that working launch setup. Release as tested on 1.6.1170, with 1.7.x stated as untested on the Nexus page (the plugin still declares Address Library compatibility, so it loads on 1.7.x).
+
+## Cleanup (2026-11-15): readability, no behavior change intended
+
+- `MouseRelease.cpp` reorganized into labeled sections with an overview comment at the top. Comments now explain why, without fix-round history.
+- Names: `Reconcile` → `UpdateMouseMode`, `Release`/`Restore` → `FreeMouse`/`ReturnMouse`, `NoteSwitchResult` → `RecordAttempt`, `g_wanted`/`g_released` → `g_wantFree`/`g_isFree`, `SetWanted` → `SetWantFree`. Log labels follow: `Free`, `Free again`, `Return`, `Return with default flags`.
+- A string comparison that decided behavior (`a_reason == "Release"`) replaced by a bool parameter.
+- The two copy-pasted device-reset hooks became one template; the two passes over the input queue became one (`FilterQueuedMouseInput`).
+- Removed two diagnostics from the fix rounds (menu cursor space, first zeroed movement).
+- `bReleaseMouse=0` now skips the menu watcher too (it only logged).
+- `iRestoreFlags` that isn't a number now logs a warning.
+- `build.ps1` finds Visual Studio with `vswhere` instead of a fixed path.
+
+**Cleanup test:** pending. A quick pass over test 9.

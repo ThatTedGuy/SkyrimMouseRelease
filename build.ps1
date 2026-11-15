@@ -2,7 +2,9 @@
 # Usage: ./build.ps1
 $ErrorActionPreference = 'Stop'
 
-$vs = "C:\Program Files\Microsoft Visual Studio\18\Community"
+$vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+$vs = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+if (-not $vs) { throw "Visual Studio with the C++ workload not found" }
 $tools = Join-Path $env:LOCALAPPDATA 'vcpkg\downloads\tools'
 $cmakeBin = Get-ChildItem $tools -Directory -Filter 'cmake-*' | Sort-Object Name -Descending | Select-Object -First 1 |
     ForEach-Object { Get-ChildItem $_.FullName -Recurse -Filter cmake.exe | Select-Object -First 1 } | ForEach-Object DirectoryName

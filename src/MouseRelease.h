@@ -1,21 +1,18 @@
 #pragma once
 
-// Frees the mouse while a watched menu is open.
-//
-// While released, Skyrim's DirectInput mouse runs in shared (non-exclusive) mode, the cursor
-// clip is removed, Skyrim's menu cursor follows the Windows cursor, and over the game window only
-// one pointer shows: Skyrim's when it draws one, otherwise the Windows arrow.
+// Frees the mouse while a watched menu is open, so it can leave the game window. See
+// MouseRelease.cpp for how.
 namespace MouseRelease
 {
-	// Hooks the mouse device; call once from SKSEPlugin_Load.
+	// Hooks the game's mouse device. Call once while the plugin loads.
 	void InstallHooks();
 
-	// Hooks the game window; call once the window exists (kDataLoaded).
+	// Hooks the game window. Call once the window exists (kDataLoaded).
 	void InstallWindowHook();
 
-	// Thread-safe; applied during the next mouse poll.
-	void SetWanted(bool a_wanted);
+	// Whether a watched menu is open. Safe from any thread; applied on the next frame.
+	void SetWantFree(bool a_wantFree);
 
-	// Thread-safe; whether Skyrim's own cursor ("Cursor Menu") is open.
+	// Whether Skyrim is drawing its own cursor ("Cursor Menu" is open). Safe from any thread.
 	void SetGameCursorShown(bool a_shown);
 }

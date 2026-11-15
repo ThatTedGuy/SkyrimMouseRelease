@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-# Only the Anniversary Edition runtime (1.6.x) is needed; the game runs as 1.6.1170.
+# Anniversary Edition runtimes only (1.6.x and 1.7.x, via Address Library). Tested on 1.6.1170.
 set(ENABLE_SKYRIM_SE OFF CACHE BOOL "" FORCE)
 set(ENABLE_SKYRIM_AE ON CACHE BOOL "" FORCE)
 set(ENABLE_SKYRIM_VR OFF CACHE BOOL "" FORCE)

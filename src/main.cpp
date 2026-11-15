@@ -1,28 +1,28 @@
+// Plugin entry point: loads the settings, installs the hooks and watches menus open and close.
+
 #include "MouseRelease.h"
 #include "Settings.h"
-
-#include "RE/Skyrim.h"
-#include "SKSE/SKSE.h"
 
 #include <mutex>
 #include <set>
 
 namespace
 {
-	// Watched menus that are open right now. A set rather than a counter, so a repeated or missed
-	// event can't leave it off by one; menu events arrive on several threads, hence the lock.
-	std::mutex            g_openLock;
+	// Watched menus that are open right now; the mouse stays free while any is. A set rather than a
+	// counter, so a repeated or missed event can't leave it off by one. Menu events arrive on
+	// several threads, hence the lock.
+	std::mutex            g_openMenusLock;
 	std::set<std::string> g_openMenus;
 
-	void SetMenuOpen(std::string_view a_name, bool a_open)
+	void SetWatchedMenuOpen(std::string_view a_name, bool a_open)
 	{
-		std::scoped_lock lock{ g_openLock };
+		std::scoped_lock lock{ g_openMenusLock };
 		if (a_open) {
 			g_openMenus.emplace(a_name);
 		} else {
 			g_openMenus.erase(std::string{ a_name });
 		}
-		MouseRelease::SetWanted(!g_openMenus.empty());
+		MouseRelease::SetWantFree(!g_openMenus.empty());
 	}
 
 	class MenuWatcher final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -42,11 +42,11 @@ namespace
 
 			const std::string_view name = a_event->menuName.c_str();
 			const bool             opening = a_event->opening;
-			const auto&            settings = Settings::Get();
-			const bool             watched = settings.IsWatchedMenu(name);
+			const bool             watched = Settings::Get().IsWatchedMenu(name);
 
 			if (watched) {
 				SKSE::log::info("{} {}", name, opening ? "opened" : "closed");
+				SetWatchedMenuOpen(name, opening);
 			} else {
 				SKSE::log::debug("{} {}", name, opening ? "opened" : "closed");
 			}
@@ -55,39 +55,34 @@ namespace
 				MouseRelease::SetGameCursorShown(opening);
 			}
 
-			if (watched && settings.releaseMouse) {
-				// Only sets a flag; the switch itself happens in the mouse poll.
-				SetMenuOpen(name, opening);
-			}
-
 			return RE::BSEventNotifyControl::kContinue;
 		}
 	};
 
-	void OnMessage(SKSE::MessagingInterface::Message* a_message)
+	void OnSKSEMessage(SKSE::MessagingInterface::Message* a_message)
 	{
 		if (a_message->type != SKSE::MessagingInterface::kDataLoaded) {
 			return;
 		}
-		if (auto* ui = RE::UI::GetSingleton()) {
-			ui->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatcher::Get());
-			SKSE::log::info("Watching menu events");
-			// A watched menu (the main menu, say) may have opened before this sink existed.
-			MouseRelease::SetGameCursorShown(ui->IsMenuOpen(RE::CursorMenu::MENU_NAME));
-			if (Settings::Get().releaseMouse) {
-				for (const auto& menu : Settings::Get().menus) {
-					if (ui->IsMenuOpen(menu)) {
-						SKSE::log::info("{} was already open", menu);
-						SetMenuOpen(menu, true);
-					}
-				}
+
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) {
+			SKSE::log::error("UI not available; menus are not watched");
+			return;
+		}
+		ui->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatcher::Get());
+		SKSE::log::info("Watching menus");
+
+		// Menus that opened before the watcher existed (the main menu, usually) sent no event.
+		MouseRelease::SetGameCursorShown(ui->IsMenuOpen(RE::CursorMenu::MENU_NAME));
+		for (const auto& menu : Settings::Get().menus) {
+			if (ui->IsMenuOpen(menu)) {
+				SKSE::log::info("{} was already open", menu);
+				SetWatchedMenuOpen(menu, true);
 			}
-		} else {
-			SKSE::log::error("UI not available; menu events are not watched");
 		}
-		if (Settings::Get().releaseMouse) {
-			MouseRelease::InstallWindowHook();
-		}
+
+		MouseRelease::InstallWindowHook();
 	}
 }
 
@@ -97,11 +92,13 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	SKSE::log::info("SkyrimMouseRelease loaded");
 
 	Settings::Get().Load();
-	if (Settings::Get().releaseMouse) {
-		MouseRelease::InstallHooks();
+	if (!Settings::Get().releaseMouse) {
+		SKSE::log::info("bReleaseMouse is off; doing nothing");
+		return true;
 	}
 
-	if (!SKSE::GetMessagingInterface()->RegisterListener(OnMessage)) {
+	MouseRelease::InstallHooks();
+	if (!SKSE::GetMessagingInterface()->RegisterListener(OnSKSEMessage)) {
 		SKSE::log::error("Could not register for SKSE messages");
 		return false;
 	}
