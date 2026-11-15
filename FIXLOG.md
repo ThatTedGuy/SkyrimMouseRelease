@@ -115,3 +115,7 @@ Not changed: missing Address Library (CommonLib's standard error; list it as a r
 - `build.ps1` finds Visual Studio with `vswhere` instead of a fixed path.
 
 **Cleanup test:** passed. The user repeated test 9; the log has no warnings or errors and now prints the blocked count ("Blocked 83 clicks or scrolls", "Blocked 1").
+
+## Release 1.0.0 (2026-11-15)
+
+Published on Nexus as mod 199209: https://www.nexusmods.com/skyrimspecialedition/mods/199209. Same build as the cleanup test (the DLL is newer than every source change; later commits only touched docs). The page settings, image and update steps are recorded in [release/nexus-page.md](release/nexus-page.md).
