@@ -13,9 +13,6 @@ namespace MouseRelease
 	// Hooks the game window. Call once the window exists (kDataLoaded).
 	void InstallWindowHook();
 
-	// Listens to the game's input after its own handlers. Call at kDataLoaded, once they exist.
-	void InstallInputListener();
-
 	// Whether a watched menu is open. Safe from any thread; applied on the next frame.
 	void SetWantFree(bool a_wantFree);
 

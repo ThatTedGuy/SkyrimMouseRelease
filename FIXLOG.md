@@ -194,13 +194,3 @@ A fresh read of the code, comments and docs found nothing critical. Fixed, as ap
 ## Release 1.1.0 (2026-11-15)
 
 Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the build tested in test 16 (tag `v1.1.0`). The description, file description, requirement notes and changelog were updated for 1.5.97 support, the console and the play lock; [release/nexus-page.md](release/nexus-page.md) records the live page.
-
-## Round 13 (2026-11-15): stop zeroing mouse movement; re-sync after input instead
-
-**Reported on Nexus (sholdsf):** with Mouse Release, Wheeler can't assign items from the inventory. Wheeler's source (github.com/D7ry/wheeler, `Input.cpp`) moves its slot pointer only from the mouse movement events (`MouseMoveEvent::mouseInputX/Y`), read in its hook on the game's input dispatch. Mouse Release zeroes those events in its Poll hook while a menu has the mouse free (Round 2), so Wheeler's pointer never moves. Wheeler is an ImGui overlay, not a Skyrim menu, and exposes no open state, so it can't be detected and excepted.
-
-**Why a different approach:** the zeroing has now broken two things (vanilla turning, fixed in Round 11 with a drag exception, and Wheeler). Per the no-piled-fixes rule, the zeroing is replaced instead of adding another exception. Approved by the user.
-
-**Change:** mouse movement is no longer touched. The jitter it prevented came from the menu adding the frame's movement to the cursor position the plugin set. Now a listener on the game's input broadcast (`BSInputDeviceManager`, registered at kDataLoaded so it runs after the game's own handlers) puts the menu cursor back on the Windows cursor after the menu has moved it, before the frame is drawn. No new code hook. *Replaces* the Round 2 movement zeroing and the Round 11 drag exception (both removed); click and scroll blocking outside the window (Round 7) is unchanged.
-
-**Risks to test:** menu cursor jitter (the main risk: if the menu cursor is drawn or used between the menu's move and the listener, jitter returns, and this round is backed out); vanilla turning; Wheeler's slot picking in the inventory.

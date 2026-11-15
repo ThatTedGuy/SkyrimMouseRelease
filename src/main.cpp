@@ -86,7 +86,6 @@ namespace
 		}
 
 		MouseRelease::InstallWindowHook();
-		MouseRelease::InstallInputListener();
 	}
 }
 
