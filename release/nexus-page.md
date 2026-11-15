@@ -2,7 +2,7 @@
 
 Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1 on 2026-11-15.
 
-This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines.
+This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines. (Until 1.1.0 is live, the block holds the 1.1.0 text.)
 
 ## Page settings as published
 
@@ -54,12 +54,7 @@ Every test has passed (tests 11 to 15). Apply these with the 1.1.0 upload.
 - **Requirements tab, Address Library note:** "Get the All in One file. It covers every game version, 1.5.97 included." (The live note names the old Anniversary Edition file, which Nexus has archived.)
 - **Requirements tab, Anniversary Upgrade:** still unticked. The reason changes: the mod doesn't need the paid Creation Club bundle on any version.
 - **File description:** "The plugin and its settings file. One file for 1.5.97, 1.6 and 1.7. Needs SKSE64 for your game version (2.0.20 for 1.5.97) and Address Library's All in One file."
-- **Description, "Works in" line:** add "and the console".
-- **Description, requirements list:** replace the SKSE/Address Library and runtime lines with:
-  ```
-  [*][url=https://skse.silverlock.org/]SKSE64[/url] for your game version (2.0.20 for 1.5.97) and the All in One file of [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
-  [*]Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all. Tested on 1.5.97, 1.6.1170 and 1.7.104. Not for VR.
-  ```
+- **Description:** replace the whole description with the copy block at the end of this file (already updated for 1.1.0: the console, the play lock, the new requirement and version lines).
 - **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus.
 - **Reply to the 1.5.97 and console commenters** once it's up.
 
@@ -73,14 +68,14 @@ Every test has passed (tests 11 to 15). Apply these with the 1.1.0 upload.
 
 ----- copy -----
 [size=5][b]Mouse Release[/b][/size]
-Skyrim locks your mouse inside the game, even in menus. With this mod, opening a menu frees it: move to your other monitor, click and scroll there, then close the menu and keep playing. No alt-tabbing.
+Open a menu and your mouse is free to use with your other monitors. Click, scroll, check a guide, etc. Close the menu and Skyrim takes the mouse back. No alt-tabbing needed.
 
-Works in the pause menu, main menu, character creation, loading screens, and the inventory, magic and skills menus. The map stays locked. Clicks and scrolls on your other monitor never reach the game.
+Works in the pause menu, main menu, character creation, loading screens, the console, and the inventory, magic and skills menus. The map stays locked. Clicks and scrolls on your other monitor never reach the game, and during play the mouse stays inside the game window.
 
 [size=4][b]Requirements[/b][/size]
 [list]
-[*][url=https://skse.silverlock.org/]SKSE64[/url] and [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
-[*]Anniversary Edition runtime. Tested on 1.6.1170; 1.7.x is untested. Not for 1.5.97 or VR.
+[*][url=https://skse.silverlock.org/]SKSE64[/url] for your game version (2.0.20 for 1.5.97) and the All in One file of [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
+[*]Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all. Tested on 1.5.97, 1.6.1170 and 1.7.104. Not for VR.
 [*]Borderless or windowed mode
 [*]SSE Display Tweaks users: set [i]LockCursor = false[/i]
 [/list]
