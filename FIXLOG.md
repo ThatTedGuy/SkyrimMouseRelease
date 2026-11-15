@@ -114,4 +114,4 @@ Not changed: missing Address Library (CommonLib's standard error; list it as a r
 - `iRestoreFlags` that isn't a number now logs a warning.
 - `build.ps1` finds Visual Studio with `vswhere` instead of a fixed path.
 
-**Cleanup test:** pending. A quick pass over test 9.
+**Cleanup test:** passed. The user repeated test 9; the log has no warnings or errors and now prints the blocked count ("Blocked 83 clicks or scrolls", "Blocked 1").
