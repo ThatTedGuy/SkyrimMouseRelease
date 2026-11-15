@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 
+#include <algorithm>
 #include <atomic>
 
 namespace
@@ -22,6 +23,7 @@ namespace
 	bool                            g_cursorInside = true;
 	bool                            g_loggedCursorSpace = false;
 	bool                            g_clipLogged = false;
+	bool                            g_loggedZeroed = false;
 
 	HWND    g_window = nullptr;
 	WNDPROC g_originalWndProc = nullptr;
@@ -70,6 +72,12 @@ namespace
 		return clip.left > desktop.left || clip.top > desktop.top || clip.right < desktop.right || clip.bottom < desktop.bottom;
 	}
 
+	bool IsCursorOverGame()
+	{
+		POINT point{};
+		return g_window && ::GetCursorPos(&point) && ::WindowFromPoint(point) == g_window;
+	}
+
 	void Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
 	{
 		if (ApplyCooperativeLevel(a_mouse, kNonExclusive | kForeground, a_reason)) {
@@ -77,6 +85,11 @@ namespace
 			g_releasedDevice = a_mouse->dInputDevice;
 			g_released = true;
 			g_clipLogged = false;
+			// Shared mode shows the Windows cursor in its last shape (often the loading wheel) until the
+			// mouse moves. Ask the window to hide it now; the message runs on the window's own thread.
+			if (IsCursorOverGame()) {
+				::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+			}
 		}
 	}
 
@@ -91,12 +104,16 @@ namespace
 		g_cursorInside = true;
 	}
 
-	// Puts Skyrim's menu cursor where the Windows cursor is, while the Windows cursor is over the game.
+	// Puts Skyrim's menu cursor where the Windows cursor is. Outside the window it sits on the nearest
+	// edge, away from the menu's buttons, so a click meant for another window presses nothing.
 	void SyncMenuCursor()
 	{
 		POINT point{};
 		RECT  client{};
 		if (!g_window || !::GetCursorPos(&point) || !::ScreenToClient(g_window, &point) || !::GetClientRect(g_window, &client)) {
+			return;
+		}
+		if (client.right <= 0 || client.bottom <= 0) {
 			return;
 		}
 
@@ -105,9 +122,8 @@ namespace
 			g_cursorInside = inside;
 			SKSE::log::info("Cursor {} the game window", inside ? "entered" : "left");
 		}
-		if (!inside || client.right <= 0 || client.bottom <= 0) {
-			return;
-		}
+		point.x = std::clamp(point.x, 0L, client.right - 1);
+		point.y = std::clamp(point.y, 0L, client.bottom - 1);
 
 		auto* menuCursor = RE::MenuCursor::GetSingleton();
 		if (!menuCursor) {
@@ -126,6 +142,29 @@ namespace
 
 		menuCursor->cursorPosX = static_cast<float>(point.x) * width / static_cast<float>(client.right);
 		menuCursor->cursorPosY = static_cast<float>(point.y) * height / static_cast<float>(client.bottom);
+	}
+
+	// Poll has just queued this frame's mouse movement. Left alone, the menu adds it on top of the
+	// position set above and overshoots by one frame of motion. Only runs while released, when the
+	// position comes from the Windows cursor instead.
+	void ZeroQueuedMouseMovement()
+	{
+		auto* queue = RE::BSInputEventQueue::GetSingleton();
+		if (!queue) {
+			return;
+		}
+		for (auto* event = queue->GetQueueHead(); event; event = event->next) {
+			if (event->GetEventType() != RE::INPUT_EVENT_TYPE::kMouseMove) {
+				continue;
+			}
+			auto* move = static_cast<RE::MouseMoveEvent*>(event);
+			if ((move->mouseInputX != 0 || move->mouseInputY != 0) && !g_loggedZeroed) {
+				g_loggedZeroed = true;
+				SKSE::log::info("Zeroing the game's mouse movement while released (first: {}, {})", move->mouseInputX, move->mouseInputY);
+			}
+			move->mouseInputX = 0;
+			move->mouseInputY = 0;
+		}
 	}
 
 	// Runs on the main thread after the game reads the mouse each frame.
@@ -161,6 +200,7 @@ namespace
 			::ClipCursor(nullptr);
 		}
 		SyncMenuCursor();
+		ZeroQueuedMouseMovement();
 	}
 
 	struct PollHook

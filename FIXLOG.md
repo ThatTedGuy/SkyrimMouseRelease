@@ -18,4 +18,20 @@ One entry per round of fixes: what changed, why, and what it replaced.
 
 **Research before test 3:** no existing mod frees the mouse in menus. Cursor Unbound (Nexus 188955) replaces the menu cursor with the Windows cursor but keeps it clipped to the window and leaves DirectInput exclusive. Decision: stay standalone.
 
-**Test 3 result:** pending.
+**Test 3 result:** one pointer, and refocus works. The log shows the game builds a new mouse device on every activation (`Initialize`, `Reinitialize`, new device pointer) and the re-apply succeeds each time. Left over: a loading wheel when the menu opens, jitter, and Skyrim's cursor moving on its own while the mouse is outside the window and Skyrim is still active.
+
+## Round 2 (2026-11-14): no loading wheel, no jitter, edge pinning
+
+**Causes**
+- Loading wheel: shared mode shows the Windows cursor in its last shape until the next `WM_SETCURSOR`, which only comes when the mouse moves.
+- Jitter: Poll queues the frame's mouse movement; the menu then adds it to the position the plugin just set, so the cursor overshoots by one frame of motion and snaps back.
+- Cursor moving outside the window: while Skyrim stays active, shared-mode DirectInput still sends movement, and the Round 1 sync stopped writing the position once the mouse left the window.
+
+**Changes**
+- On release, if the cursor is over the game, a `WM_SETCURSOR` is posted to the game window so the existing handler hides the Windows cursor at once. New.
+- After Poll, while released, the queued mouse-move event (`BSInputEventQueue`) has its movement set to zero, so the menu cursor stays exactly where the plugin puts it. New; logged once as "Zeroing the game's mouse movement".
+- The sync no longer stops outside the window: it pins Skyrim's cursor to the nearest window edge. *Replaces* the Round 1 early return when the cursor is outside. Also keeps the cursor off the menu's buttons, so a click meant for another window presses nothing.
+
+**Note:** an approach based on Cursor Unbound was proposed and dropped at the user's request; nothing from it is used. The queue approach is our own.
+
+**Test 4 result:** pending. To check: no wheel on open, smooth cursor, cursor still moves at all (if the menu only redraws on movement, zeroing would freeze it), cursor on the edge while outside, stray clicks outside press nothing.
