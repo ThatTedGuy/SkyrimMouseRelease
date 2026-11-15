@@ -10,7 +10,7 @@ The mouse is freed in the pause menu, main menu, character creator, loading scre
 
 - Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x. One DLL works on all of them. Tested on 1.6.1170; 1.5.97 and 1.7.104 tests are pending.
 - [SKSE64](https://skse.silverlock.org/) for your game version (2.0.20 for 1.5.97)
-- [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444): "All in one (1.5.X)" for 1.5.97, "All in one (Anniversary Edition)" for 1.6 and later
+- [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444): the "All in One" file, which covers every game version
 - If you use SSE Display Tweaks, set `LockCursor = false` in its INI, or it keeps the cursor inside the window.
 
 ## Settings
