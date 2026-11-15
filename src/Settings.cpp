@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 ThatTedGuy
+
 // Reads the INI. A small hand parser: key=value lines, ';' or '#' comments, sections ignored.
 
 #include "Settings.h"

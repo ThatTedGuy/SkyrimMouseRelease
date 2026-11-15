@@ -1,4 +1,6 @@
-# SkyrimMouseRelease
+# Mouse Release
+
+`SkyrimMouseRelease.dll` · by ThatTedGuy · version 1.0.0
 
 An SKSE plugin for Skyrim Special Edition / Anniversary Edition. While you're in a menu, your mouse can leave the game window and work on your other monitors. When you go back to playing, the game takes the mouse back.
 
@@ -50,3 +52,11 @@ This produces `dist/SKSE/Plugins/` (the DLL and INI) and `SkyrimMouseRelease.zip
 - Tested on one PC: runtime 1.6.1170, 1920x1080, two monitors.
 - Gamepad use in these menus is untested.
 - If the game loses focus at the exact moment a menu closes, handing the mouse back can fail. The game recovers by itself when you click back in.
+
+## AI disclosure
+
+The code was written by an AI assistant (Claude, by Anthropic). The idea, the design decisions and all in-game testing are mine. [FIXLOG.md](FIXLOG.md) records each round of testing and fixes.
+
+## License
+
+Copyright (C) 2026 ThatTedGuy. Licensed under the [GNU General Public License v3.0 or later](LICENSE), as required by [CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR/tree/ng), which this plugin is built on.

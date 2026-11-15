@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 ThatTedGuy
+
 // Plugin entry point: loads the settings, installs the hooks and watches menus open and close.
 
 #include "MouseRelease.h"

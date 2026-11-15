@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 ThatTedGuy
+
 // Frees the mouse while a watched menu is open.
 //
 // Skyrim reads the mouse through DirectInput in exclusive mode, which hides the Windows cursor and
