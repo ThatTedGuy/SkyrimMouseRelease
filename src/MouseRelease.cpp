@@ -167,12 +167,12 @@ namespace
 		}
 		if (opening) {
 			MoveCursorToMenuCursor();
+			g_blockedInputs = 0;  // counted per menu visit, so not reset by a re-apply after refocus
 		}
 		::ClipCursor(nullptr);
 		g_releasedDevice = a_mouse->dInputDevice;
 		g_released = true;
 		g_clipLogged = false;
-		g_blockedInputs = 0;
 		// Shared mode shows the Windows cursor in its last shape (often the loading wheel) until the
 		// mouse moves. Set the right shape now; the message runs on the window's own thread.
 		RefreshCursorShape();

@@ -99,4 +99,6 @@ Code review of all sources; nothing critical. Fixed, as approved:
 
 Not changed: missing Address Library (CommonLib's standard error; list it as a requirement), gamepad (can't be tested here).
 
-**Test 9 result:** pending. To check: everything from test 8 still works; scrolling or clicking on the other monitor while a freed menu is open does nothing in the menu, and the log says how many were blocked; the default log is short.
+**Test 9 result (1.6.1170):** all passed. Pause menu, inventory and loading screens work; scrolling and clicking on the other monitor did nothing in the inventory; the default log is 42 lines for the session. One log bug: the "Blocked N clicks or scrolls" count never printed, because every re-apply after refocus reset the count. Fixed by resetting it only when a menu opens (Round 7 code, same commit area; not a new mechanism).
+
+**Next:** the same test on the latest Steam runtime (1.7.x). The collection no longer needs 1.6.1170.
