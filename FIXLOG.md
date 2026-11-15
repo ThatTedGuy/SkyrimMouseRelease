@@ -194,3 +194,5 @@ A fresh read of the code, comments and docs found nothing critical. Fixed, as ap
 ## Release 1.1.0 (2026-11-15)
 
 Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the build tested in test 16 (tag `v1.1.0`). The description, file description, requirement notes and changelog were updated for 1.5.97 support, the console and the play lock; [release/nexus-page.md](release/nexus-page.md) records the live page.
+
+**Test 17 result (Round 13 build, vanilla 1.5.97 with Wheeler 1.2):** failed. The menu cursor jitters at the main menu, although the log shows the input listener was registered ("Listening to input"); the menu applies the frame's mouse movement somewhere after the listener runs. Round 13 is reverted, back to the Round 12 code (movement zeroing with the drag exception). Wheeler couldn't be judged: it showed "Empty Wheel", and even with Mouse Release off (`-PluginOff`, slots added in edit mode) it didn't take items in this vanilla copy, with no errors in its log.
