@@ -5,7 +5,7 @@ Fields for the Nexus upload form, then the description. The description is in BB
 ## Form fields
 
 - **Mod name:** Mouse Release
-- **Summary:** Use your other monitors while Skyrim's menus are open, without alt-tabbing.
+- **Summary:** Open a menu and your mouse is free to use with your other monitors. Click, scroll, check a guide, etc. Close the menu and Skyrim takes the mouse back. No alt-tabbing needed.
 - **Category:** User Interface
 - **Version:** 1.0.0
 - **Requirements:** SKSE64, Address Library for SKSE Plugins
