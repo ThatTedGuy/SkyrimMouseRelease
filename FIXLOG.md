@@ -119,3 +119,13 @@ Not changed: missing Address Library (CommonLib's standard error; list it as a r
 ## Release 1.0.0 (2026-11-15)
 
 Published on Nexus as mod 199209: https://www.nexusmods.com/skyrimspecialedition/mods/199209. Same build as the cleanup test (the DLL is newer than every source change; later commits only touched docs). The page settings, image and update steps are recorded in [release/nexus-page.md](release/nexus-page.md).
+
+## Round 8 (2026-11-15): hide the cursor after the hand-back, not before
+
+**Found after release:** after leaving an inn (a loading screen), the Windows arrow showed during play. The log showed every return succeeding and no warnings. Not reproduced in several tries.
+
+**Likely cause (found by reading the code, not confirmed in game):** `ReturnMouse` runs on the Poll thread and set the Round 5 hide-once flag and posted `WM_SETCURSOR` *before* switching the device back, while the window thread kept handling real mouse messages. If the mouse moved in those few milliseconds, a real `WM_SETCURSOR` used up the flag, and the next one, still handled while free on a loading screen (no game cursor), set the arrow. Exclusive mode then stops mouse messages, so the arrow stays. Only a loading screen picks the arrow while free, which fits it showing after one.
+
+**Changes**
+- The cursor is hidden after the device is back in exclusive mode and `g_isFree` is cleared, with a private window message (`kHideCursorMessage`) that a real mouse message can't stand in for. *Replaces* the Round 5/6 `g_hideCursorOnce` flag and its branch in the `WM_SETCURSOR` handler, both removed. Posting `WM_SETCURSOR` on free (Round 2/6) is unchanged.
+- New log line: during play (mouse not free), 4 times a second, if the Windows cursor is showing with a shape over the active game window, warn once with its shape and the time since the last return, and note when it hides again. Diagnostic, so another occurrence shows whether this was the cause.

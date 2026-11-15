@@ -51,7 +51,9 @@ namespace
 	std::atomic_bool g_refreeNeeded{ false };     // the game reset the device or regained focus while free
 	std::atomic_bool g_retryNow{ false };         // focus came back: retry a failed switch without waiting
 	std::atomic_bool g_gameCursorShown{ false };  // Skyrim draws its own cursor ("Cursor Menu" is open)
-	std::atomic_bool g_hideCursorOnce{ false };   // the next WM_SETCURSOR hides the cursor even if not free
+
+	// Posted to the game window after the mouse goes back to the game: hide the Windows cursor.
+	constexpr UINT kHideCursorMessage = WM_APP + 0x4D52;
 
 	// Used only from the Poll hook (one call per frame, so never concurrently).
 	REX::W32::IDirectInputDevice8A* g_freeDevice = nullptr;  // the device we switched, to notice a new one
@@ -60,6 +62,9 @@ namespace
 	int                             g_blockedInputs = 0;  // clicks and scrolls dropped during this menu visit
 	int                             g_failures = 0;       // failed switches in a row
 	Clock::time_point               g_nextTry{};          // after a failure, don't try again before this
+	Clock::time_point               g_returnedAt{};       // when the mouse last went back to the game
+	Clock::time_point               g_nextCursorCheck{};  // throttles LogVisibleCursor
+	bool                            g_visibleCursorLogged = false;
 
 	// Set once when the window is hooked.
 	HWND    g_window = nullptr;
@@ -126,6 +131,15 @@ namespace
 	{
 		return IsCursorOverGame() &&
 		       ::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+	}
+
+	// Hides the Windows cursor, as during normal play. Its own message rather than a WM_SETCURSOR,
+	// so a real mouse message can't be handled in its place.
+	void HideCursor()
+	{
+		if (IsCursorOverGame()) {
+			::PostMessageW(g_window, kHideCursorMessage, 0, 0);
+		}
 	}
 
 	void LogCursorPosition(std::string_view a_when)
@@ -228,13 +242,6 @@ namespace
 		LogCursorPosition("Menu closed");
 		BringCursorIntoWindow();
 
-		// The cursor may still carry a shape from another screen or a loading screen, and once the
-		// game holds the mouse nothing resets it. Hide it, as during normal play.
-		g_hideCursorOnce = true;  // before posting: the window thread may handle the message at once
-		if (!RefreshCursorShape()) {
-			g_hideCursorOnce = false;
-		}
-
 		if (!SetCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Return") &&
 			!SetCooperativeLevel(a_mouse, kGameDefaultFlags, "Return with default flags")) {
 			return false;  // still free; retried later
@@ -245,6 +252,12 @@ namespace
 		g_freeDevice = nullptr;
 		g_isFree = false;
 		g_cursorInside = true;
+		g_returnedAt = Clock::now();
+
+		// The cursor may still carry a shape from another screen or a loading screen, and once the
+		// game holds the mouse nothing resets it. Only after g_isFree is cleared: until then, mouse
+		// messages handled on the window thread still pick the free-mouse shape.
+		HideCursor();
 		return true;
 	}
 
@@ -346,6 +359,29 @@ namespace
 		}
 	}
 
+	// During play the Windows cursor is present but has no shape. If it shows over the active game
+	// window, log that once, with how long after the last return, so a bug report says when and what.
+	void LogVisibleCursor()
+	{
+		const auto now = Clock::now();
+		if (now < g_nextCursorCheck) {
+			return;
+		}
+		g_nextCursorCheck = now + std::chrono::milliseconds(250);
+
+		CURSORINFO info{ sizeof(CURSORINFO) };
+		const bool visible = ::GetCursorInfo(&info) && (info.flags & CURSOR_SHOWING) && info.hCursor &&
+		                     ::GetForegroundWindow() == g_window && IsCursorOverGame();
+		if (visible && !g_visibleCursorLogged) {
+			const auto since = std::chrono::duration_cast<std::chrono::milliseconds>(now - g_returnedAt);
+			SKSE::log::warn("Windows cursor showing over the game during play (shape {:#x}), {} ms after the mouse went back to the game",
+				reinterpret_cast<std::uintptr_t>(info.hCursor), since.count());
+		} else if (!visible && g_visibleCursorLogged) {
+			SKSE::log::info("Windows cursor hidden again");
+		}
+		g_visibleCursorLogged = visible;
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	// Per-frame update, called from the Poll hook
 	// ---------------------------------------------------------------------------------------------
@@ -373,6 +409,7 @@ namespace
 			return;
 		}
 		if (!isFree) {
+			LogVisibleCursor();
 			return;
 		}
 
@@ -439,8 +476,8 @@ namespace
 	// Subclasses the game window for two messages:
 	//  - WM_ACTIVATEAPP: focus came back, so free the mouse again and retry anything that failed.
 	//  - WM_SETCURSOR: over the game, show exactly one cursor. While free, that's Skyrim's own if it
-	//    draws one (no Windows cursor), otherwise the Windows arrow (loading screens). Right after the
-	//    mouse goes back to the game, hide the Windows cursor once, as during normal play.
+	//    draws one (no Windows cursor), otherwise the Windows arrow (loading screens).
+	// It also handles kHideCursorMessage, posted after the mouse goes back to the game.
 	LRESULT CALLBACK WindowProc(HWND a_window, UINT a_message, WPARAM a_wParam, LPARAM a_lParam)
 	{
 		switch (a_message) {
@@ -455,21 +492,17 @@ namespace
 			break;
 
 		case WM_SETCURSOR:
-			{
-				const bool hideOnce = g_hideCursorOnce.exchange(false);
-				if (LOWORD(a_lParam) != HTCLIENT) {
-					break;
-				}
-				if (hideOnce || (g_isFree && g_gameCursorShown)) {
-					::SetCursor(nullptr);
-					return TRUE;
-				}
-				if (g_isFree) {
-					::SetCursor(::LoadCursorA(nullptr, IDC_ARROW));
-					return TRUE;
-				}
+			if (g_isFree && LOWORD(a_lParam) == HTCLIENT) {
+				::SetCursor(g_gameCursorShown ? nullptr : ::LoadCursorA(nullptr, IDC_ARROW));
+				return TRUE;
 			}
 			break;
+
+		case kHideCursorMessage:
+			if (!g_isFree) {  // a menu may have opened again since this was posted
+				::SetCursor(nullptr);
+			}
+			return 0;
 
 		default:
 			break;
