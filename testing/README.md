@@ -4,7 +4,7 @@ Vanilla Skyrim installs for testing the plugin on game versions other than the m
 
 | Version | Folder | SKSE | Address Library file |
 |---|---|---|---|
-| 1.5.97 | `C:\SkyrimTest\1.5.97` | 2.0.20 | All in one (Special Edition) |
+| 1.5.97 | `C:\SkyrimTest\1.5.97` | 2.0.20 | All in one (1.5.X) |
 | 1.7.104 | `C:\SkyrimTest\1.7.104` | the build for 1.7.104 | All in one (Anniversary Edition) |
 
 Run the scripts from the project folder, in a normal (not administrator) PowerShell window. Windows blocks scripts by default, so first allow them for that window only:

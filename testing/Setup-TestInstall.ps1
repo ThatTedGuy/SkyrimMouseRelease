@@ -70,7 +70,7 @@ else { Write-Host 'SKSE: OK' }
 $plugins = Join-Path $target 'Data\SKSE\Plugins'
 if (-not (Get-ChildItem $plugins -Filter "*-$dashed-0.bin" -ErrorAction SilentlyContinue)) {
     $ok = $false
-    $file = if ($Version -eq '1.5.97') { 'All in one (Special Edition)' } else { 'All in one (Anniversary Edition)' }
+    $file = if ($Version -eq '1.5.97') { 'All in one (1.5.X)' } else { 'All in one (Anniversary Edition)' }
     Write-Host "Address Library: missing. Get '$file' from https://www.nexusmods.com/skyrimspecialedition/mods/32444?tab=files"
     Write-Host "  and put its .bin file for $Version into $plugins"
 }
