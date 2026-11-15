@@ -18,6 +18,7 @@ namespace
 	std::atomic_bool g_wanted{ false };        // a watched menu is open
 	std::atomic_bool g_released{ false };      // shared mode is active
 	std::atomic_bool g_needsReapply{ false };  // focus or device reset since the last release
+	std::atomic_bool g_hideCursorOnce{ false };  // next WM_SETCURSOR hides the cursor even if not released
 
 	// Used only from the Poll hook, which runs once per frame: on the main thread while the pause menu
 	// is open, but on a worker thread during play (the log shows Restore there).
@@ -107,6 +108,8 @@ namespace
 
 	// Exclusive mode leaves the Windows cursor wherever it is. If that is another screen, it stays
 	// visible there during play, so bring it to the edge spot where Skyrim's cursor was pinned.
+	// It still carries the arrow shape from the other screen, and with the game holding the mouse no
+	// message will reset it, so ask the window to set no shape (Skyrim's normal state during play).
 	void BringCursorIntoWindow()
 	{
 		POINT point{};
@@ -118,6 +121,8 @@ namespace
 		point.y = std::clamp(point.y, 0L, client.bottom - 1);
 		::ClientToScreen(g_window, &point);
 		::SetCursorPos(point.x, point.y);
+		g_hideCursorOnce = true;
+		::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
 		SKSE::log::info("Moved the Windows cursor back into the game window");
 	}
 
@@ -346,10 +351,14 @@ namespace
 			}
 			break;
 		case WM_SETCURSOR:
-			// Over the game, only Skyrim's menu cursor should show.
-			if (g_released && LOWORD(a_lParam) == HTCLIENT) {
-				::SetCursor(nullptr);
-				return TRUE;
+			{
+				// Over the game, only Skyrim's menu cursor should show. The one-shot flag covers the
+				// close after the cursor was brought back from another screen.
+				const bool hideOnce = g_hideCursorOnce.exchange(false);
+				if ((g_released || hideOnce) && LOWORD(a_lParam) == HTCLIENT) {
+					::SetCursor(nullptr);
+					return TRUE;
+				}
 			}
 			break;
 		default:

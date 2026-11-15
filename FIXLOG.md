@@ -55,4 +55,12 @@ One entry per round of fixes: what changed, why, and what it replaced.
 - On menu open (not on refocus), the Windows cursor is moved to where Skyrim's menu cursor is, so the sync starts from the game's own spot. New. The menu redrawing only on movement is the reason the Round 2 zeroing doesn't hide the jump; Round 2 is unchanged.
 - For 3 seconds after each close, the log records every 250 ms whether the Windows cursor is showing, its position, its shape handle, and whether the game window is active. Diagnostic only, for the stray cursor; no fix until the cause is known. The Round 3 move-back stays.
 
-**Test 6 result:** pending. To check: no jump to center on the first move after reopening; for the stray cursor, the "After close" lines plus an F12 screenshot.
+**Test 6 result:** center jump fixed. Stray cursor found: after a normal close the log shows the Windows cursor `hidden ... shape 0`; after closing from the other screen it shows `showing ... shape 65539` (the standard arrow) for the whole 3 seconds. A screen recording (ByFrame sheets, 2x crop at 0:14) shows the arrow drifting over gameplay and clicking nothing. Also seen: a focus flicker during recording made one reapply fail (`Acquire=0x80070005`), and the next one, milliseconds later, succeeded.
+
+## Round 5 (2026-11-14): reset the cursor shape after bringing it back
+
+**Cause:** during play the Windows cursor is always present with no shape. On the other screen Windows gives it the arrow; Round 3 moves it back over the game, but the shape only resets on the next mouse message, and with the game holding the mouse exclusively none arrives.
+
+**Change:** when Round 3's move-back runs, it also sets a one-shot flag and posts `WM_SETCURSOR` to the game window, and the existing handler sets no shape. *Extends* the Round 3 move-back and the Round 2 hide on open (same mechanism); only fires in that case, so other mods' cursors are untouched.
+
+**Test 7 result:** pending. To check: no arrow after Esc from the other screen; the "After close" lines show `hidden ... shape 0`. Then remove the 3-second diagnostic.
