@@ -2,7 +2,7 @@
 
 SKSE plugin for Skyrim SE/AE (built for runtime 1.6.1170) that lets the mouse leave the game window while the pause menu is open, so it can move to a second monitor. When the menu closes, the game takes the mouse back.
 
-Status: prototype. Fix history is in [FIXLOG.md](FIXLOG.md).
+Status: working prototype, tested on one setup (1.6.1170, 1920x1080, two monitors). Not yet released. Fix history is in [FIXLOG.md](FIXLOG.md).
 
 ## How it works
 
@@ -27,7 +27,7 @@ SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the
 
 ## Log
 
-`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, the cursor positions at each watched open and close, the Windows cursor's state for 3 seconds after each close (temporary diagnostic), and the result codes of each mouse mode change.
+`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, the cursor positions at each watched open and close, and the result codes of each mouse mode change.
 
 ## Build
 

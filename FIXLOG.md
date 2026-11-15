@@ -63,4 +63,4 @@ One entry per round of fixes: what changed, why, and what it replaced.
 
 **Change:** when Round 3's move-back runs, it also sets a one-shot flag and posts `WM_SETCURSOR` to the game window, and the existing handler sets no shape. *Extends* the Round 3 move-back and the Round 2 hide on open (same mechanism); only fires in that case, so other mods' cursors are untouched.
 
-**Test 7 result:** pending. To check: no arrow after Esc from the other screen; the "After close" lines show `hidden ... shape 0`. Then remove the 3-second diagnostic.
+**Test 7 result:** fixed. Three closes from the other screen, each followed by `hidden ... shape 0`; no errors. The 3-second "After close" diagnostic from Round 4 is removed. All reported issues are resolved.

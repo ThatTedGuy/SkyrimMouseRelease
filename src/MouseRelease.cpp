@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <chrono>
 
 namespace
 {
@@ -146,34 +145,6 @@ namespace
 		::SetCursorPos(target.x, target.y);
 	}
 
-	// Diagnostics for the stray cursor after closing the menu while on another screen.
-	using Clock = std::chrono::steady_clock;
-	Clock::time_point g_watchUntil{};
-	Clock::time_point g_nextWatchLog{};
-
-	void WatchCursorAfterClose()
-	{
-		const auto now = Clock::now();
-		if (now >= g_watchUntil || now < g_nextWatchLog) {
-			return;
-		}
-		g_nextWatchLog = now + std::chrono::milliseconds(250);
-
-		CURSORINFO info{ sizeof(CURSORINFO) };
-		if (!::GetCursorInfo(&info)) {
-			return;
-		}
-		POINT client = info.ptScreenPos;
-		if (g_window) {
-			::ScreenToClient(g_window, &client);
-		}
-		SKSE::log::info("After close: Windows cursor {} at {}, {} (window {}, {}), shape {}, game window {}",
-			(info.flags & CURSOR_SHOWING) ? "showing" : "hidden",
-			info.ptScreenPos.x, info.ptScreenPos.y, client.x, client.y,
-			reinterpret_cast<std::uintptr_t>(info.hCursor),
-			::GetForegroundWindow() == g_window ? "active" : "not active");
-	}
-
 	void Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
 	{
 		if (a_reason == "Release") {
@@ -204,8 +175,6 @@ namespace
 		g_releasedDevice = nullptr;
 		g_released = false;
 		g_cursorInside = true;
-		g_watchUntil = Clock::now() + std::chrono::seconds(3);
-		g_nextWatchLog = {};
 	}
 
 	// Puts Skyrim's menu cursor where the Windows cursor is. Outside the window it sits on the nearest
@@ -283,7 +252,6 @@ namespace
 			return;
 		}
 		if (!released) {
-			WatchCursorAfterClose();
 			return;
 		}
 
