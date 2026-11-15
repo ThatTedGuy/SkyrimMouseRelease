@@ -1,6 +1,6 @@
 # Nexus page for Mouse Release
 
-Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Update 1.0.1 prepared 2026-11-15, not yet uploaded.
+Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1 on 2026-11-15.
 
 This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines.
 

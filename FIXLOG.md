@@ -134,4 +134,4 @@ Published on Nexus as mod 199209: https://www.nexusmods.com/skyrimspecialedition
 
 ## Release 1.0.1 (2026-11-15)
 
-Round 8 released. Changelog: fixed a timing issue that could leave the Windows cursor showing after a loading screen.
+Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that could leave the Windows cursor showing after a loading screen.
