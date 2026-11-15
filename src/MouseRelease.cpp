@@ -18,7 +18,8 @@ namespace
 	std::atomic_bool g_released{ false };      // shared mode is active
 	std::atomic_bool g_needsReapply{ false };  // focus or device reset since the last release
 
-	// Main thread only.
+	// Used only from the Poll hook, which runs once per frame: on the main thread while the pause menu
+	// is open, but on a worker thread during play (the log shows Restore there).
 	REX::W32::IDirectInputDevice8A* g_releasedDevice = nullptr;
 	bool                            g_cursorInside = true;
 	bool                            g_loggedCursorSpace = false;
@@ -78,8 +79,52 @@ namespace
 		return g_window && ::GetCursorPos(&point) && ::WindowFromPoint(point) == g_window;
 	}
 
+	// The Windows cursor in game-window client coordinates.
+	bool GetCursorInClient(POINT& a_point, RECT& a_client)
+	{
+		return g_window && ::GetCursorPos(&a_point) && ::ScreenToClient(g_window, &a_point) &&
+		       ::GetClientRect(g_window, &a_client) && a_client.right > 0 && a_client.bottom > 0;
+	}
+
+	bool IsInside(const POINT& a_point, const RECT& a_client)
+	{
+		return a_point.x >= 0 && a_point.y >= 0 && a_point.x < a_client.right && a_point.y < a_client.bottom;
+	}
+
+	void LogCursorPosition(std::string_view a_when)
+	{
+		POINT point{};
+		RECT  client{};
+		if (!GetCursorInClient(point, client)) {
+			return;
+		}
+		auto* menuCursor = RE::MenuCursor::GetSingleton();
+		SKSE::log::info("{}: Windows cursor at {}, {} in a {}x{} window; menu cursor at {}, {}",
+			a_when, point.x, point.y, client.right, client.bottom,
+			menuCursor ? menuCursor->cursorPosX : -1.0f, menuCursor ? menuCursor->cursorPosY : -1.0f);
+	}
+
+	// Exclusive mode leaves the Windows cursor wherever it is. If that is another screen, it stays
+	// visible there during play, so bring it to the edge spot where Skyrim's cursor was pinned.
+	void BringCursorIntoWindow()
+	{
+		POINT point{};
+		RECT  client{};
+		if (!GetCursorInClient(point, client) || IsInside(point, client)) {
+			return;
+		}
+		point.x = std::clamp(point.x, 0L, client.right - 1);
+		point.y = std::clamp(point.y, 0L, client.bottom - 1);
+		::ClientToScreen(g_window, &point);
+		::SetCursorPos(point.x, point.y);
+		SKSE::log::info("Moved the Windows cursor back into the game window");
+	}
+
 	void Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
 	{
+		if (a_reason == "Release") {
+			LogCursorPosition("Menu opened");
+		}
 		if (ApplyCooperativeLevel(a_mouse, kNonExclusive | kForeground, a_reason)) {
 			::ClipCursor(nullptr);
 			g_releasedDevice = a_mouse->dInputDevice;
@@ -95,6 +140,8 @@ namespace
 
 	void Restore(RE::BSWin32MouseDevice* a_mouse)
 	{
+		LogCursorPosition("Menu closed");
+		BringCursorIntoWindow();
 		if (!ApplyCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Restore")) {
 			SKSE::log::error("Restore failed; trying exclusive + foreground");
 			ApplyCooperativeLevel(a_mouse, kExclusive | kForeground, "Restore fallback");
@@ -110,14 +157,11 @@ namespace
 	{
 		POINT point{};
 		RECT  client{};
-		if (!g_window || !::GetCursorPos(&point) || !::ScreenToClient(g_window, &point) || !::GetClientRect(g_window, &client)) {
-			return;
-		}
-		if (client.right <= 0 || client.bottom <= 0) {
+		if (!GetCursorInClient(point, client)) {
 			return;
 		}
 
-		const bool inside = point.x >= 0 && point.y >= 0 && point.x < client.right && point.y < client.bottom;
+		const bool inside = IsInside(point, client);
 		if (inside != g_cursorInside) {
 			g_cursorInside = inside;
 			SKSE::log::info("Cursor {} the game window", inside ? "entered" : "left");
@@ -167,7 +211,7 @@ namespace
 		}
 	}
 
-	// Runs on the main thread after the game reads the mouse each frame.
+	// Runs from the Poll hook after the game reads the mouse each frame.
 	void Reconcile(RE::BSWin32MouseDevice* a_mouse)
 	{
 		const bool wanted = g_wanted.load();

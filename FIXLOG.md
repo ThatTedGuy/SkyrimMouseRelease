@@ -34,4 +34,17 @@ One entry per round of fixes: what changed, why, and what it replaced.
 
 **Note:** an approach based on Cursor Unbound was proposed and dropped at the user's request; nothing from it is used. The queue approach is our own.
 
-**Test 4 result:** pending. To check: no wheel on open, smooth cursor, cursor still moves at all (if the menu only redraws on movement, zeroing would freeze it), cursor on the edge while outside, stray clicks outside press nothing.
+**Test 4 result:** works mostly. No wheel, smooth cursor, and the log shows the zeroing ran. Left over: pressing Esc while the mouse is on another screen leaves a visible Windows cursor that moves oddly, and the cursor sometimes starts in the middle when the menu reopens (cause unknown, maybe not this plugin). The log also showed `Restore` runs on worker threads, not the main thread.
+
+## Round 3 (2026-11-14): bring the cursor back on close
+
+**Causes**
+- Stray cursor after Esc on another screen: exclusive mode leaves the Windows cursor where it is, and the plugin only hides it over the game window, so it stays visible on the other screen while the game reads movement from DirectInput.
+- Cursor in the middle on reopen: not confirmed. While released, Skyrim's cursor copies the Windows cursor, so the Windows cursor was already in the middle; something moves it there during play.
+
+**Changes**
+- On close, if the Windows cursor is outside the game window, it is moved to the nearest edge spot (where Skyrim's cursor was pinned) before exclusive mode is restored. New.
+- The log records the Windows cursor and menu cursor positions at every open and close. New, to find what centers the cursor. The user chose to leave the start position to the game.
+- Comments and README corrected: the Poll hook runs on the main thread while paused and on a worker thread during play.
+
+**Test 5 result:** pending. To check: Esc while on the other screen leaves no stray cursor; the log shows where the cursor is at each open.

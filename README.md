@@ -8,9 +8,9 @@ Status: prototype. Fix history is in [FIXLOG.md](FIXLOG.md).
 
 - Skyrim reads the mouse through DirectInput in foreground + exclusive mode, which hides and traps the Windows cursor.
 - The plugin listens for menu open and close events (`MenuOpenCloseEvent`). These arrive on several threads, so the event only sets a "wanted" flag.
-- A hook on `BSWin32MouseDevice::Poll` (vtable slot 2, main thread, every frame) applies the flag:
+- A hook on `BSWin32MouseDevice::Poll` (vtable slot 2, once per frame; main thread while paused, a worker thread during play) applies the flag:
   - **Release:** switches the game's mouse device (`dInputDevice`) to shared mode (`DISCL_NONEXCLUSIVE | DISCL_FOREGROUND`) and removes any cursor clip.
-  - **Restore:** switches back to `iRestoreFlags` (default exclusive + foreground).
+  - **Restore:** if the Windows cursor is outside the game window, moves it to the nearest edge spot, then switches back to `iRestoreFlags` (default exclusive + foreground).
   - **While released:** puts Skyrim's menu cursor (`MenuCursor::cursorPosX/Y`) where the Windows cursor is, or on the nearest window edge while the mouse is outside, and sets the frame's queued mouse movement (`BSInputEventQueue`) to zero so the menu doesn't add it on top. It also removes any cursor clip that reappears and re-applies shared mode after a focus change or a device reset.
 - Hooks on `Initialize` and `Reinitialize` (slots 1 and 9) log device resets and trigger a re-apply while released.
 - The game window procedure is subclassed to log focus changes (`WM_ACTIVATEAPP`) and to hide the Windows cursor over the game while released (`WM_SETCURSOR`), so only one pointer shows: Skyrim's inside the window, Windows' outside it. On release it posts itself a `WM_SETCURSOR` so the Windows cursor is hidden before the mouse first moves.
@@ -27,7 +27,7 @@ SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the
 
 ## Log
 
-`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, and the result codes of each mouse mode change.
+`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, the cursor positions at each watched open and close, and the result codes of each mouse mode change.
 
 ## Build
 
