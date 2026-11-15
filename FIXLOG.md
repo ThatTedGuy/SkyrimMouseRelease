@@ -159,3 +159,13 @@ Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that cou
 **Risks to test:** alt-tab during play (the cursor must move freely in other programs); quitting the game from play.
 
 **Test 11 result (Round 10 build, vanilla 1.5.97):** all passed. Turning far both ways and scrolling only zooms the camera; nothing on the second screen scrolls. Alt-tab during play leaves the mouse free in other programs (no worse than vanilla's own alt-tab). Quitting with `qqq` from play leaves the desktop mouse normal. Menus and the console still free the mouse after play. Log: 12 frees, 11 returns (the last free is the pause menu used to quit), no warnings or errors.
+
+## Test 12 (Round 10 build, vanilla 1.7.104) and Round 11 (2026-11-15): let drags turn things
+
+**Test 12 result:** first run on 1.7.x. All menus free the mouse, the console works, no door or scroll problems, the play lock holds and alt-tab is fine. Clicks and scrolls on the other screen were blocked (31 in the log), so the plugin reads 1.7.99's changed input queue correctly. No warnings or errors. **Failed:** items in the inventory, the character in the character creator, and the skills sky could not be turned. With `-PluginOff`, item turning worked, so the plugin caused it.
+
+**Cause:** all three turn by holding the left button and moving the mouse, and vanilla reads that from the same mouse movement events that Round 2 sets to zero while the mouse is free. The main setup (test 8) passed because SkyUI and RaceMenu replace these menus and turn things another way. Vanilla 1.5.97 is affected the same way (not tried in test 11).
+
+**Change:** movement is no longer zeroed during a left-button drag that started inside the game window, tracked from the queued button events (down inside starts it, release ends it, and freeing or returning the mouse resets it). *Narrows* the Round 2 zeroing rule instead of adding a fix on top of it; outside drags the cursor jitter fix is unchanged. Drags can't start outside the window, because Round 7 blocks presses there.
+
+**Risks to test:** the menu cursor during a drag (it may move a little ahead of the Windows cursor until the button is released); a drag that ends outside the window.

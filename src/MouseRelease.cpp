@@ -10,7 +10,7 @@
 // Shared mode alone would show two cursors that drift apart, so every frame while the mouse is free:
 //  - Skyrim's menu cursor is placed where the Windows cursor is (or on the nearest window edge when
 //    the Windows cursor is on another screen), and the game's own mouse movement is set to zero so
-//    the menu doesn't add it on top;
+//    the menu doesn't add it on top (except while dragging with the left button, which turns items);
 //  - clicks and wheel turns are dropped while the cursor is outside the window, so input meant for
 //    another program does nothing in the menu;
 //  - over the game window, only one cursor shows (see WindowProc).
@@ -59,6 +59,7 @@ namespace
 	// Used only from the Poll hook (one call per frame, so never concurrently).
 	REX::W32::IDirectInputDevice8A* g_freeDevice = nullptr;  // the device we switched, to notice a new one
 	bool                            g_cursorInside = true;
+	bool                            g_dragging = false;  // left button pressed inside the window, not yet released
 	bool                            g_clipLogged = false;
 	int                             g_blockedInputs = 0;  // clicks and scrolls dropped during this menu visit
 	int                             g_failures = 0;       // failed switches in a row
@@ -231,6 +232,7 @@ namespace
 		}
 		::ClipCursor(nullptr);
 		g_lockedInPlay = false;
+		g_dragging = false;  // a release may have been lost with the old device or focus
 		g_freeDevice = a_mouse->dInputDevice;
 		g_isFree = true;
 		g_clipLogged = false;
@@ -254,6 +256,7 @@ namespace
 		g_freeDevice = nullptr;
 		g_isFree = false;
 		g_cursorInside = true;
+		g_dragging = false;
 		g_returnedAt = Clock::now();
 
 		// The cursor may still carry a shape from another screen or a loading screen, and once the
@@ -322,9 +325,17 @@ namespace
 		return wheel || button.IsDown();
 	}
 
+	bool IsLeftButton(const RE::InputEvent& a_event)
+	{
+		return a_event.GetEventType() == RE::INPUT_EVENT_TYPE::kButton && a_event.GetDevice() == RE::INPUT_DEVICE::kMouse &&
+		       static_cast<const RE::ButtonEvent&>(a_event).GetIDCode() == RE::BSWin32MouseDevice::Keys::kLeftButton;
+	}
+
 	// Poll has just queued this frame's input events. Two changes:
 	//  - Mouse movement is set to zero. The menu would add it to the position SyncMenuCursor set and
-	//    overshoot by a frame of motion, which shows as jitter.
+	//    overshoot by a frame of motion, which shows as jitter. Except during a left-button drag that
+	//    started in the window: vanilla menus turn the item, the character (character creator) and
+	//    the skills sky from that movement.
 	//  - While the cursor is outside the window, clicks and wheel turns are unlinked from the queue.
 	//    Skyrim still receives them while it is the active window, but they were meant for whatever
 	//    is under the cursor on the other screen.
@@ -339,7 +350,16 @@ namespace
 		RE::InputEvent*  previous = nullptr;
 		RE::InputEvent** link = &queue->GetQueueHead();
 		while (auto* event = *link) {
-			if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove) {
+			if (IsLeftButton(*event)) {
+				const auto& button = static_cast<const RE::ButtonEvent&>(*event);
+				if (button.IsDown() && g_cursorInside) {
+					g_dragging = true;
+				} else if (!button.IsPressed()) {
+					g_dragging = false;
+				}
+			}
+
+			if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove && !g_dragging) {
 				auto* move = static_cast<RE::MouseMoveEvent*>(event);
 				move->mouseInputX = 0;
 				move->mouseInputY = 0;
