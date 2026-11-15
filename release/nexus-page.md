@@ -42,7 +42,7 @@ Mod requirements (legacy), not file-to-file, so they don't need relinking when t
 
 ## Pending for 1.1.0
 
-Change on the live page once the 1.7.104 and 1.6.1170 tests pass (1.5.97 passed in test 11).
+Every test has passed (tests 11 to 15). Apply these with the 1.1.0 upload.
 
 **What 1.5.97 users need.** The same one file as everyone else, plus:
 - **SKSE 2.0.20**, the last SKSE build for 1.5.97. It's on [skse.silverlock.org](https://skse.silverlock.org/) under the older builds, not on the SKSE Nexus page's main files.
@@ -60,7 +60,7 @@ Change on the live page once the 1.7.104 and 1.6.1170 tests pass (1.5.97 passed 
   [*][url=https://skse.silverlock.org/]SKSE64[/url] for your game version (2.0.20 for 1.5.97) and the All in One file of [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
   [*]Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all. Tested on 1.5.97, 1.6.1170 and 1.7.104. Not for VR.
   ```
-- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens.
+- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus.
 - **Reply to the 1.5.97 and console commenters** once it's up.
 
 ## Releasing an update

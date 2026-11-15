@@ -42,7 +42,7 @@ namespace
 		return items;
 	}
 
-	bool ParseBool(std::string_view a_value, bool a_default)
+	bool ParseBool(std::string_view a_key, std::string_view a_value, bool a_default)
 	{
 		std::string lower(a_value);
 		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -52,7 +52,7 @@ namespace
 		if (lower == "0" || lower == "false") {
 			return false;
 		}
-		SKSE::log::warn("'{}' is not 0, 1, true or false; using {}", a_value, a_default);
+		SKSE::log::warn("{}: '{}' is not 0, 1, true or false; using {}", a_key, a_value, a_default);
 		return a_default;
 	}
 }
@@ -84,16 +84,21 @@ void Settings::Load()
 		const auto value = Trim(std::string_view(text).substr(eq + 1));
 
 		if (key == "bReleaseMouse") {
-			releaseMouse = ParseBool(value, releaseMouse);
+			releaseMouse = ParseBool(key, value, releaseMouse);
 		} else if (key == "bVerboseLog") {
-			verboseLog = ParseBool(value, verboseLog);
+			verboseLog = ParseBool(key, value, verboseLog);
 		} else if (key == "bLockCursorInPlay") {
-			lockCursorInPlay = ParseBool(value, lockCursorInPlay);
+			lockCursorInPlay = ParseBool(key, value, lockCursorInPlay);
 		} else if (key == "sMenus") {
 			menus = SplitList(value);
 		} else if (key == "iRestoreFlags") {
-			std::uint32_t parsed{};
-			if (std::from_chars(value.data(), value.data() + value.size(), parsed).ec == std::errc{}) {
+			// Decimal, or hex with 0x. The whole value must be a number.
+			const bool       hex = value.starts_with("0x") || value.starts_with("0X");
+			const char*      first = value.data() + (hex ? 2 : 0);
+			const char*      last = value.data() + value.size();
+			std::uint32_t    parsed{};
+			const auto [end, error] = std::from_chars(first, last, parsed, hex ? 16 : 10);
+			if (error == std::errc{} && end == last && first != last) {
 				restoreFlags = parsed;
 			} else {
 				SKSE::log::warn("iRestoreFlags '{}' is not a number; using {}", value, restoreFlags);

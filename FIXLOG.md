@@ -175,3 +175,16 @@ Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that cou
 **Test 14 result (Round 11 build, vanilla 1.5.97):** turning only. Items, the character in `showracemenu` and the skills sky all turn. Log: no warnings or errors. 1.5.97 and 1.7.104 are done; the 1.6.1170 main setup check (SkyUI, RaceMenu, console, play lock) is left before 1.1.0.
 
 **Test 15 result (Round 11 build, main setup 1.6.1170 with the Gate To Sovngarde collection):** all passed. Console (clicking an NPC, moving out and back), item turning in SkyUI and character turning in RaceMenu, the play lock (no scrolling on the other screen, alt-tab free), loading screens and all other menus. The installed INI had the new defaults. Log: no warnings or errors, 13 frees and 12 returns. Every check has now passed on 1.5.97, 1.6.1170 and 1.7.104.
+
+## Round 12 (2026-11-15): pre-release review
+
+A fresh read of the code, comments and docs found nothing critical. Fixed, as approved:
+
+- **Hide-cursor message number.** `WM_APP + 0x4D52` is `0xCD52`, inside the range Windows hands out through `RegisterWindowMessage`, so another program's registered message could have been taken for it and swallowed. Now registered with Windows at load (`SkyrimMouseRelease.HideCursor`). *Replaces* the fixed number from Round 8; the message's job is unchanged.
+- **Redundant "Free again".** Focus coming back while a menu was opening flagged a re-free even before the first free, and returning the mouse never cleared a pending flag, causing one extra switch. The flag is now set on focus only while free, and cleared at the start of a menu's first free and of each return (before switching, so a reset during the switch still counts). Adjusts the Round 1/6 refocus handling; no new mechanism.
+- **Settings.** `iRestoreFlags` must be a whole number, decimal or `0x` hex (`0x5` used to read as `0`). On/off warnings now name the setting.
+- **Comments and text.** The overview comment now says the window thread also sets the cursor shape and releases the play lock. The INI quotes the real log line for a failed return.
+- **Test script.** `Run-Test.ps1` no longer puts the main setup's profile folders back while any Skyrim is running (a slow start, or Ctrl+C), and `-RestoreOnly` refuses while one runs.
+- **Docs.** README lists borderless or windowed mode. The testing guide no longer names a personal setup or path, and no longer says spells turn. The pending Nexus notes drop their stale condition and add the turning fix to the 1.1.0 changelog.
+
+**Risks to test:** the Windows cursor stays hidden after menus and loading screens close (the registered message); menus free and return as before.

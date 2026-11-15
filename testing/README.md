@@ -1,6 +1,6 @@
 # Test installs
 
-Vanilla Skyrim installs for testing the plugin on game versions other than the main setup's (1.6.1170 through Runtime Swapper, with the Gate To Sovngarde collection). Each version gets its own folder under `C:\SkyrimTest`, with only SKSE, Address Library and this plugin. The main install, Vortex and Runtime Swapper are never touched.
+Vanilla Skyrim installs for testing the plugin on game versions other than the one your main Skyrim install runs. Each version gets its own folder under `C:\SkyrimTest`, with only SKSE, Address Library and this plugin. The main install and its mod manager are never touched.
 
 | Version | Folder | SKSE | Address Library file |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Vanilla Skyrim installs for testing the plugin on game versions other than the m
 Run the scripts from the project folder, in a normal (not administrator) PowerShell window. Windows blocks scripts by default, so first allow them for that window only:
 
 ```powershell
-cd C:\Users\Ted\Projects\SkyrimMouseRelease
+cd <the folder you cloned this repository into>
 Set-ExecutionPolicy -Scope Process Bypass -Force
 ```
 
@@ -46,7 +46,7 @@ From the main menu, open the console (`~`) and type `coc riverwood` to skip the 
 3. **Console over a menu:** open the inventory, open the console, close the console, close the inventory.
 4. **Alt-tab** with the console open, then click back in.
 5. **Loading screen:** `coc whiterun` with the mouse on the other monitor. No arrow in play afterwards.
-6. **Pause, inventory, magic, skills:** each frees the mouse, and items, spells and constellations still turn.
+6. **Pause, inventory, magic, skills:** each frees the mouse, and items and the skills sky still turn (drag with the left button).
 7. **Character creator:** `showracemenu`, turn the character, move out and back, close.
 8. **Play lock:** in third person, turn the camera a long way in both directions, then scroll. Only the game zooms; nothing on the other screen scrolls. Alt-tab out: the mouse moves freely in other programs.
 9. Quit from the pause menu.

@@ -40,6 +40,8 @@ function Restore-Profiles([string]$RunDir) {
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 if ($RestoreOnly) {
+    # A running game would keep writing into whichever profile folders are in place.
+    if (Get-Process SkyrimSE -ErrorAction SilentlyContinue) { throw 'Skyrim is running. Close it first.' }
     Restore-Profiles (Join-Path $Root "runs\interrupted-$stamp")
     exit 0
 }
@@ -108,8 +110,16 @@ iSize H=$($screen.Height)
     else { $game | Wait-Process }
 }
 finally {
-    Restore-Profiles $runDir
+    # Never put the main setup's folders back while a game could still write into them (a slow
+    # start, or this window stopped with Ctrl+C).
+    $restored = -not (Get-Process SkyrimSE -ErrorAction SilentlyContinue)
+    if ($restored) { Restore-Profiles $runDir }
+    else {
+        Write-Host 'Skyrim is still running, so your normal setup has NOT been put back yet.'
+        Write-Host 'Close the game, then run: ./testing/Run-Test.ps1 -RestoreOnly'
+    }
 }
+if (-not $restored) { exit 1 }
 
 $log = Join-Path $runDir 'My Games\SKSE\SkyrimMouseRelease.log'
 if (Test-Path $log) {

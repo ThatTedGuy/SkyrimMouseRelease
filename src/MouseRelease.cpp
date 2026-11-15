@@ -17,7 +17,8 @@
 //
 // All switching happens in a hook on the mouse device's Poll, which the game calls once per frame
 // (on the main thread while paused, on a worker thread during play). Menu events and window
-// messages arrive on other threads, so they only set flags that the Poll hook acts on.
+// messages arrive on other threads. They set flags that the Poll hook acts on, and the window
+// thread also sets the cursor shape and releases the play lock; it never switches the device.
 
 #include "MouseRelease.h"
 
@@ -54,7 +55,8 @@ namespace
 	std::atomic_bool g_lockedInPlay{ false };     // we confined the cursor to the window for play
 
 	// Posted to the game window after the mouse goes back to the game: hide the Windows cursor.
-	constexpr UINT kHideCursorMessage = WM_APP + 0x4D52;
+	// Registered with Windows, so no other message the game window gets can have the same number.
+	UINT g_hideCursorMessage = 0;
 
 	// Used only from the Poll hook (one call per frame, so never concurrently).
 	REX::W32::IDirectInputDevice8A* g_freeDevice = nullptr;  // the device we switched, to notice a new one
@@ -139,8 +141,8 @@ namespace
 	// so a real mouse message can't be handled in its place.
 	void HideCursor()
 	{
-		if (IsCursorOverGame()) {
-			::PostMessageW(g_window, kHideCursorMessage, 0, 0);
+		if (g_hideCursorMessage != 0 && IsCursorOverGame()) {
+			::PostMessageW(g_window, g_hideCursorMessage, 0, 0);
 		}
 	}
 
@@ -222,6 +224,9 @@ namespace
 	{
 		if (a_menuOpened) {
 			LogCursorPosition("Menu opened");
+			// This switch covers any earlier reset. Cleared before switching, so a reset during the
+			// switch still asks for another one.
+			g_refreeNeeded = false;
 		}
 		if (!SetCooperativeLevel(a_mouse, kFreeFlags, a_menuOpened ? "Free" : "Free again")) {
 			return false;
@@ -245,6 +250,7 @@ namespace
 	{
 		LogCursorPosition("Menu closed");
 		BringCursorIntoWindow();
+		g_refreeNeeded = false;  // a reset while free means nothing once the mouse is back with the game
 
 		if (!SetCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Return") &&
 			!SetCooperativeLevel(a_mouse, kGameDefaultFlags, "Return with default flags")) {
@@ -534,15 +540,22 @@ namespace
 	//    focus left, so release the play lock.
 	//  - WM_SETCURSOR: over the game, show exactly one cursor. While free, that's Skyrim's own if it
 	//    draws one (no Windows cursor), otherwise the Windows arrow (loading screens).
-	// It also handles kHideCursorMessage, posted after the mouse goes back to the game.
+	// It also handles g_hideCursorMessage, posted after the mouse goes back to the game.
 	LRESULT CALLBACK WindowProc(HWND a_window, UINT a_message, WPARAM a_wParam, LPARAM a_lParam)
 	{
+		if (a_message == g_hideCursorMessage && g_hideCursorMessage != 0) {
+			if (!g_isFree) {  // a menu may have opened again since this was posted
+				::SetCursor(nullptr);
+			}
+			return 0;
+		}
+
 		switch (a_message) {
 		case WM_ACTIVATEAPP:
 			SKSE::log::debug("Game window {}", a_wParam ? "activated" : "deactivated");
 			if (a_wParam) {
-				g_retryNow = true;
-				if (g_wantFree) {
+				g_retryNow = true;  // also covers a menu whose first switch hasn't happened yet
+				if (g_isFree) {
 					g_refreeNeeded = true;
 				}
 			} else if (g_lockedInPlay.exchange(false)) {
@@ -557,12 +570,6 @@ namespace
 			}
 			break;
 
-		case kHideCursorMessage:
-			if (!g_isFree) {  // a menu may have opened again since this was posted
-				::SetCursor(nullptr);
-			}
-			return 0;
-
 		default:
 			break;
 		}
@@ -574,6 +581,12 @@ namespace MouseRelease
 {
 	void InstallHooks()
 	{
+		// Before the hooks, so the Poll hook never sees it unset.
+		g_hideCursorMessage = ::RegisterWindowMessageW(L"SkyrimMouseRelease.HideCursor");
+		if (g_hideCursorMessage == 0) {
+			SKSE::log::warn("Could not register the hide-cursor message (error {}); the Windows cursor may show after a menu closes", ::GetLastError());
+		}
+
 		REL::Relocation<std::uintptr_t> vtable{ RE::VTABLE_BSWin32MouseDevice[0] };
 		InitializeHook::func = vtable.write_vfunc(kInitializeSlot, InitializeHook::Thunk);
 		PollHook::func = vtable.write_vfunc(kPollSlot, PollHook::Thunk);
