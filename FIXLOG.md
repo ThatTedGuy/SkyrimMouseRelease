@@ -206,3 +206,11 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 **Risks to test:** menu cursor jitter (the main risk: if the menu cursor is drawn or used between the menu's move and the listener, jitter returns, and this round is backed out); vanilla turning; Wheeler's slot picking in the inventory.
 
 **Test 17 result (Round 13 build, vanilla 1.5.97 with Wheeler 1.2):** failed. The menu cursor jitters at the main menu, although the log shows the input listener was registered ("Listening to input"); the menu applies the frame's mouse movement somewhere after the listener runs. Round 13 is reverted, back to the Round 12 code (movement zeroing with the drag exception). Wheeler couldn't be judged: it showed "Empty Wheel", and even with Mouse Release off (`-PluginOff`, slots added in edit mode) it didn't take items in this vanilla copy, with no errors in its log.
+
+## Round 14 (2026-11-15): zero mouse movement at the start of the input hand-out, not in Poll
+
+**Cause (from Wheeler's source, `Hooks.cpp` and `Input.cpp`):** Wheeler hooks the game's call that hands the frame's input events to their handlers, and reads `MouseMoveEvent::mouseInputX/Y` in that hook, just before the hand-out. Mouse Release zeroed the same events earlier, in its Poll hook, so Wheeler only ever saw zero.
+
+**Change:** the zeroing (with the Round 11 drag exception) moves out of the Poll hook into an input handler (`MovementFilter`) placed first in the game's handler list at kDataLoaded, inserted directly under the list's lock (`AddEventSink` would append it last). Wheeler reads before the hand-out and sees the real movement; the game's handlers, which run during it, still see zero. *Moves* the Round 2/11 zeroing to a later point; the rule itself is unchanged. Click and scroll blocking outside the window (Round 7) stays in Poll. Chosen by the user over an automatic step-aside when Wheeler is detected, which remains the fallback.
+
+**Risks to test:** jitter and drag turning in vanilla (the zeroing must still reach the menu); Wheeler slot picking in the inventory, tested in the main setup because Wheeler 1.2 didn't work in the vanilla 1.5.97 copy.

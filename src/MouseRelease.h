@@ -13,6 +13,10 @@ namespace MouseRelease
 	// Hooks the game window. Call once the window exists (kDataLoaded).
 	void InstallWindowHook();
 
+	// Puts the mouse movement filter first among the game's input handlers. Call at kDataLoaded,
+	// once the game's own handlers are registered.
+	void InstallMovementFilter();
+
 	// Whether a watched menu is open. Safe from any thread; applied on the next frame.
 	void SetWantFree(bool a_wantFree);
 

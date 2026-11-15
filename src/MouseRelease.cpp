@@ -10,7 +10,9 @@
 // Shared mode alone would show two cursors that drift apart, so every frame while the mouse is free:
 //  - Skyrim's menu cursor is placed where the Windows cursor is (or on the nearest window edge when
 //    the Windows cursor is on another screen), and the game's own mouse movement is set to zero so
-//    the menu doesn't add it on top (except while dragging with the left button, which turns items);
+//    the menu doesn't add it on top (except while dragging with the left button, which turns items).
+//    The zeroing happens as the game hands input to its handlers (see MovementFilter), not when the
+//    mouse is read, so mods that read the movement before that hand-out (Wheeler) still see it;
 //  - clicks and wheel turns are dropped while the cursor is outside the window, so input meant for
 //    another program does nothing in the menu;
 //  - over the game window, only one cursor shows (see WindowProc).
@@ -337,14 +339,9 @@ namespace
 		       static_cast<const RE::ButtonEvent&>(a_event).GetIDCode() == RE::BSWin32MouseDevice::Keys::kLeftButton;
 	}
 
-	// Poll has just queued this frame's input events. Two changes:
-	//  - Mouse movement is set to zero. The menu would add it to the position SyncMenuCursor set and
-	//    overshoot by a frame of motion, which shows as jitter. Except during a left-button drag that
-	//    started in the window: vanilla menus turn the item, the character (character creator) and
-	//    the skills sky from that movement.
-	//  - While the cursor is outside the window, clicks and wheel turns are unlinked from the queue.
-	//    Skyrim still receives them while it is the active window, but they were meant for whatever
-	//    is under the cursor on the other screen.
+	// Poll has just queued this frame's input events. While the cursor is outside the window, clicks
+	// and wheel turns are unlinked from the queue: Skyrim still receives them while it is the active
+	// window, but they were meant for whatever is under the cursor on the other screen.
 	void FilterQueuedMouseInput()
 	{
 		auto* queue = RE::BSInputEventQueue::GetSingleton();
@@ -356,21 +353,6 @@ namespace
 		RE::InputEvent*  previous = nullptr;
 		RE::InputEvent** link = &queue->GetQueueHead();
 		while (auto* event = *link) {
-			if (IsLeftButton(*event)) {
-				const auto& button = static_cast<const RE::ButtonEvent&>(*event);
-				if (button.IsDown() && g_cursorInside) {
-					g_dragging = true;
-				} else if (!button.IsPressed()) {
-					g_dragging = false;
-				}
-			}
-
-			if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove && !g_dragging) {
-				auto* move = static_cast<RE::MouseMoveEvent*>(event);
-				move->mouseInputX = 0;
-				move->mouseInputY = 0;
-			}
-
 			if (!g_cursorInside && IsMouseClickOrWheel(*event)) {
 				*link = event->next;  // the event object stays in the queue's own pool
 				if (tail == event) {
@@ -386,6 +368,40 @@ namespace
 			link = &event->next;
 		}
 	}
+
+	// The game hands each frame's input events to its handlers right after Poll. This handler goes
+	// first in that list and sets mouse movement to zero while the mouse is free: the menu would add
+	// it to the position SyncMenuCursor set and overshoot by a frame of motion, which shows as
+	// jitter. Except during a left-button drag that started in the window: vanilla menus turn the
+	// item, the character (character creator) and the skills sky from that movement.
+	// Doing this here rather than in Poll matters for mods that read the movement just before the
+	// hand-out: Wheeler aims its slots with it, and would otherwise only ever see zero.
+	class MovementFilter final : public RE::BSTEventSink<RE::InputEvent*>
+	{
+	public:
+		RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_events, RE::BSTEventSource<RE::InputEvent*>*) override
+		{
+			if (!a_events || !g_isFree) {
+				return RE::BSEventNotifyControl::kContinue;
+			}
+			for (auto* event = *a_events; event; event = event->next) {
+				if (IsLeftButton(*event)) {
+					const auto& button = static_cast<const RE::ButtonEvent&>(*event);
+					if (button.IsDown() && g_cursorInside) {
+						g_dragging = true;
+					} else if (!button.IsPressed()) {
+						g_dragging = false;
+					}
+				}
+				if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove && !g_dragging) {
+					auto* move = static_cast<RE::MouseMoveEvent*>(event);
+					move->mouseInputX = 0;
+					move->mouseInputY = 0;
+				}
+			}
+			return RE::BSEventNotifyControl::kContinue;
+		}
+	};
 
 	// During play the Windows cursor is present but has no shape. If it shows over the active game
 	// window, log that once, with how long after the last return, so a bug report says when and what.
@@ -608,6 +624,25 @@ namespace MouseRelease
 			return;
 		}
 		SKSE::log::info("Game window hooked");
+	}
+
+	void InstallMovementFilter()
+	{
+		auto* input = RE::BSInputDeviceManager::GetSingleton();
+		if (!input) {
+			SKSE::log::error("Input manager not available; the menu cursor will jitter while the mouse is free");
+			return;
+		}
+		static MovementFilter filter;
+
+		// First in the list, before the game's own handlers. AddEventSink would put it last.
+		RE::BSSpinLockGuard locker(input->lock);
+		if (input->notifying) {
+			SKSE::log::error("Input handlers busy; the menu cursor will jitter while the mouse is free");
+			return;
+		}
+		input->sinks.insert(input->sinks.begin(), &filter);
+		SKSE::log::info("Movement filter installed, first of {} input handlers", input->sinks.size());
 	}
 
 	void SetWantFree(bool a_wantFree)
