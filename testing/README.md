@@ -18,7 +18,7 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 1. `./testing/Setup-TestInstall.ps1 -Version 1.5.97`. It opens the Steam console and prints three `download_depot` commands. Paste them one at a time; each takes a while (about 15 GB in all).
 2. When all three say "Depot download complete", run the script again. It moves the files from Steam's `steamapps\content` folder into the test folder.
-3. Extract SKSE into the test folder and put the Address Library `.bin` for that version into `Data\SKSE\Plugins`. Run the script again until it says "Ready".
+3. Copy the contents of the SKSE archive's `skse64_...` folder (without `src`) into the test folder, and put the Address Library `.bin` for that version into `Data\SKSE\Plugins`. Run the script again until it says "Ready".
 4. Do one version at a time: both downloads use the same Steam folders.
 
 If Steam answers "Manifest not available" for 1.5.97, use the Skyrim Downgrade Patcher on Nexus to make the 1.5.97 copy instead.

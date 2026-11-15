@@ -24,8 +24,11 @@ $exe = Join-Path $target 'SkyrimSE.exe'
 
 function Get-ExeVersion([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }
-    $info = (Get-Item $Path).VersionInfo
-    return '{0}.{1}.{2}' -f $info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart
+    # The version text, not the numeric fields: the 1.5.97 exe's numeric fields say 1.0.0.
+    if ((Get-Item $Path).VersionInfo.FileVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+        return '{0}.{1}.{2}' -f $Matches[1], $Matches[2], $Matches[3]
+    }
+    return $null
 }
 
 # 1. Game files: move the finished depot downloads into the test folder.
@@ -63,7 +66,7 @@ $ok = $true
 if (-not (Test-Path (Join-Path $target "skse64_$underscored.dll")) -or -not (Test-Path (Join-Path $target 'skse64_loader.exe'))) {
     $ok = $false
     $which = if ($Version -eq '1.5.97') { 'SKSE 2.0.20 (the build for 1.5.97)' } else { "the SKSE build for $Version" }
-    Write-Host "SKSE: missing. Get $which from https://skse.silverlock.org/ and extract the whole archive into $target"
+    Write-Host "SKSE: missing. Get $which from https://skse.silverlock.org/ and copy everything inside its skse64_... folder into $target (the src folder is not needed)"
 }
 else { Write-Host 'SKSE: OK' }
 
@@ -76,4 +79,4 @@ if (-not (Get-ChildItem $plugins -Filter "*-$dashed-0.bin" -ErrorAction Silently
 }
 else { Write-Host 'Address Library: OK' }
 
-if ($ok) { Write-Host "Ready. Run: ./testing/Run-Test.ps1 -Version $Version" } else { exit 1 }
+if ($ok) { Write-Host "Ready. Run: ./testing/Run-Test.ps1 -Version $Version"; exit 0 } else { exit 1 }
