@@ -2,7 +2,7 @@
 
 SKSE plugin for Skyrim SE/AE (built for runtime 1.6.1170) that lets the mouse leave the game window while a menu is open (by default the pause menu, main menu, character creator, loading screens, inventory, magic and skills), so it can move to a second monitor. When the last of those menus closes, the game takes the mouse back.
 
-Status: pause menu tested and working on one setup (1.6.1170, 1920x1080, two monitors); saved as tag `v0.1-pause-menu` with its build in `backups/`. The other menus are untested. Not yet released. Fix history is in [FIXLOG.md](FIXLOG.md).
+Status: all default menus tested and working on one setup (1.6.1170, 1920x1080, two monitors). The pause-menu-only version is saved as tag `v0.1-pause-menu` with its build in `backups/`. Not yet released. Fix history is in [FIXLOG.md](FIXLOG.md).
 
 ## How it works
 
@@ -22,7 +22,7 @@ SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the
 | Key | Default | Meaning |
 |---|---|---|
 | `bReleaseMouse` | `1` | `1` frees the mouse in watched menus; `0` only logs menu events (no hooks installed). |
-| `sMenus` | `Journal Menu, Main Menu, RaceSex Menu, Loading Menu, InventoryMenu, MagicMenu, StatsMenu` | Comma-separated menu names (case-sensitive) that free the mouse: pause menu, title screen, character creator, loading screens, items, magic, skills. The map (`MapMenu`) is left out on purpose: it scrolls when the cursor sits at the screen edge. |
+| `sMenus` | `Journal Menu, Main Menu, RaceSex Menu, Loading Menu, InventoryMenu, MagicMenu, StatsMenu` | Comma-separated menu names (case-sensitive) that free the mouse: pause menu, title screen, character creator, loading screens, items, magic, skills. Left out on purpose: the map (`MapMenu`), which scrolls when the cursor sits at the screen edge, and the Tab menu (`TweenMenu`), which the map opens from. |
 | `iRestoreFlags` | `5` | DirectInput flags restored on close (`1` exclusive, `2` non-exclusive, `4` foreground, `8` background). |
 
 ## Log
@@ -44,6 +44,7 @@ CommonLibSSE-NG comes from the maintained fork `alandtse/CommonLibVR` (branch `n
 
 ## Known limits
 
-- Zeroed movement applies to every handler of the queued event while released. Menus that turn or pan with mouse movement (character creator, inventory item view, skills) may stop responding to it; untested.
+- Zeroed movement applies to every handler of the queued event while released. The character creator, inventory item view and skills menu still turn normally (test 8), so they don't rely on it.
+- If the game window loses focus at the moment a menu closes, restoring exclusive mode fails (`Acquire=0x80070005`); the game rebuilds the mouse device on the next activation and recovers.
 - The menu redraws its cursor only on mouse movement, so position changes show on the next move.
 - Not yet confirmed: whether a click outside the window while Skyrim is still active reaches the menu.

@@ -80,4 +80,10 @@ New feature, not a fix: the user chose to free the mouse in the main menu, chara
 
 **Risk to test:** the Round 2 movement zeroing may stop the character creator, inventory item view and skills menu from turning with the mouse.
 
-**Test 8 result:** pending.
+**Test 8 result:** all six areas work: main menu, character creator (turning the character still works), loading screens (arrow shows, leaving and coming back works), inventory (item turning works), magic, skills (turning between constellations works). Clicking back into the main menu or character creator starts the cursor near the middle; the user is fine with that. The loading-screen model couldn't be turned, but keys didn't turn it either, so it isn't this plugin.
+
+Log notes for the safety pass:
+- Twice a loading screen ended while the mouse was on the other screen and the restore's `Acquire` failed (`0x80070005`, access denied; the window lost focus 60 ms later). On the next activation the game rebuilt the mouse device itself and play continued normally. Recovery works, but it relies on the game.
+- The session ended with the mouse still released (game closed from a menu). Harmless, since Windows releases the device with the process, but worth confirming in the safety pass.
+
+**Decision:** the Tab menu (`TweenMenu`: Skills, Magic, Items, Map) stays locked. The user sees no need, since Esc gives the same freedom, and the map opens from it.
