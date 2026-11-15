@@ -69,6 +69,7 @@ Change on the live page once the 1.7.104 and 1.6.1170 tests pass (1.5.97 passed 
 2. Build with `./build.ps1`, test in game, and add a FIXLOG entry.
 3. Commit, tag `vx.y.z`, push the commit and the tag.
 4. On Nexus, upload the new zip as a Main file with the same version and a changelog line. Archive the old file or move it to Old.
+5. Apply everything under "Pending for x.y.z" above (requirement notes, file description, description text), then move it into the page settings and description sections so this file matches the live page again.
 
 ----- copy -----
 [size=5][b]Mouse Release[/b][/size]
