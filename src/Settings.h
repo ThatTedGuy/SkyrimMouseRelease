@@ -16,7 +16,7 @@ struct Settings
 	bool releaseMouse{ true };
 
 	// Menus that free the mouse, by Skyrim's internal menu name (case-sensitive).
-	std::vector<std::string> menus{ "Journal Menu", "Main Menu", "RaceSex Menu", "Loading Menu", "InventoryMenu", "MagicMenu", "StatsMenu" };
+	std::vector<std::string> menus{ "Journal Menu", "Main Menu", "RaceSex Menu", "Loading Menu", "InventoryMenu", "MagicMenu", "StatsMenu", "Console" };
 
 	// DirectInput flags given back to the game when the last watched menu closes.
 	// 0x5 = exclusive + foreground, which is what Skyrim uses.

@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-# Anniversary Edition runtimes only (1.6.x and 1.7.x, via Address Library). Tested on 1.6.1170.
-set(ENABLE_SKYRIM_SE OFF CACHE BOOL "" FORCE)
+# One DLL for Special Edition (1.5.97) and Anniversary Edition (1.6.x, 1.7.x) runtimes, via Address Library.
+set(ENABLE_SKYRIM_SE ON CACHE BOOL "" FORCE)
 set(ENABLE_SKYRIM_AE ON CACHE BOOL "" FORCE)
 set(ENABLE_SKYRIM_VR OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)

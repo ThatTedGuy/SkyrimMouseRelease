@@ -135,3 +135,14 @@ Published on Nexus as mod 199209: https://www.nexusmods.com/skyrimspecialedition
 ## Release 1.0.1 (2026-11-15)
 
 Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that could leave the Windows cursor showing after a loading screen.
+
+## Round 9 (2026-11-15): console, and one DLL for 1.5.97 and AE
+
+**Asked for on Nexus:** the console (`~`), which is when one user alt-tabs most, and a 1.5.97 version (two users).
+
+**Changes**
+- `Console` added to the default `sMenus` (code default and INI). No code change: the console pauses the game and shows Skyrim's cursor like the other watched menus, so the existing freeing, cursor sync and click blocking apply. *Extends* the Round 6 menu list.
+- SE support turned on in `CMakeLists.txt` (`ENABLE_SKYRIM_SE ON`, AE stays on, VR off). CommonLibSSE-NG now builds one DLL that exports both the SE entry point (`SKSEPlugin_Query`) and the AE one (`SKSEPlugin_Version`). Every game structure the plugin reads (window handle, menu cursor, mouse device, input queue, mouse device vtable) already has SE addresses and layouts in NG, including the input queue's changed layout from 1.7.99 on; the build needed no source changes. *Replaces* the AE-only build setting from the first prototype.
+- New [testing/](testing/README.md): scripts that build vanilla 1.5.97 and 1.7.104 installs from Steam depots in `C:\SkyrimTest`, and run a test with the main setup's profile folders (INIs, saves, Plugins.txt) renamed aside and restored after.
+
+**Risks to test:** clicking an NPC in the console to select it while the mouse is free; the console opened over another watched menu; the plugin loading at all on 1.5.97 and 1.7.104.

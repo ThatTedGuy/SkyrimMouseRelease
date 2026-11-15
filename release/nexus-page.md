@@ -40,6 +40,15 @@ Mod requirements (legacy), not file-to-file, so they don't need relinking when t
 - **Permission settings:** Write your own (custom). Nexus's recommended settings (no re-upload, ask before modifying) conflict with the GPL. Text:
   > Licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). You may modify, convert, re-upload and reuse this mod, as long as your version keeps the same license and you publish its source code. Source and full license: https://github.com/ThatTedGuy/SkyrimMouseRelease
 
+## Pending for 1.1.0
+
+Change on the live page once the 1.5.97 and 1.7.104 tests pass:
+
+- Description, "Works in" line: add "and the console".
+- Description, requirements: replace the runtime line with "Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all", and say to get the SKSE build and Address Library file that match the game version.
+- Requirements tab, Address Library note: "Get the All in one file for your game version (Special Edition for 1.5.97, Anniversary Edition for 1.6 and later)."
+- Changelog: 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7.
+
 ## Releasing an update
 
 1. Change the version in `CMakeLists.txt` (`project(... VERSION x.y.z)`) and `vcpkg.json`, and in the README's header line.
