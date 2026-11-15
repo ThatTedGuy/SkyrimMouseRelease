@@ -42,12 +42,26 @@ Mod requirements (legacy), not file-to-file, so they don't need relinking when t
 
 ## Pending for 1.1.0
 
-Change on the live page once the 1.5.97 and 1.7.104 tests pass:
+Change on the live page once the 1.7.104 and 1.6.1170 tests pass (1.5.97 passed in test 11).
 
-- Description, "Works in" line: add "and the console".
-- Description, requirements: replace the runtime line with "Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all", and say to get the SKSE build and Address Library file that match the game version.
-- Requirements tab, Address Library note: "Get the All in One file. It covers every game version, 1.5.97 included."
-- Changelog: 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens.
+**What 1.5.97 users need.** The same one file as everyone else, plus:
+- **SKSE 2.0.20**, the last SKSE build for 1.5.97. It's on [skse.silverlock.org](https://skse.silverlock.org/) under the older builds, not on the SKSE Nexus page's main files.
+- **Address Library: the "All in One" file.** It covers every version from 1.5.97 to 1.7.104, so it's the same download for all users.
+
+**Where that goes, given Nexus's limits.** Nexus requirements belong to the whole mod, not to a file, and a separate 1.5.97 file isn't needed. Both requirements (SKSE and Address Library) apply to every version; only the SKSE build differs. So the version detail goes in the requirement notes and the text:
+
+- **Requirements tab, SKSE64 note:** "Use the build for your game version. 1.5.97: SKSE 2.0.20 from skse.silverlock.org."
+- **Requirements tab, Address Library note:** "Get the All in One file. It covers every game version, 1.5.97 included." (The live note names the old Anniversary Edition file, which Nexus has archived.)
+- **Requirements tab, Anniversary Upgrade:** still unticked. The reason changes: the mod doesn't need the paid Creation Club bundle on any version.
+- **File description:** "The plugin and its settings file. One file for 1.5.97, 1.6 and 1.7. Needs SKSE64 for your game version (2.0.20 for 1.5.97) and Address Library's All in One file."
+- **Description, "Works in" line:** add "and the console".
+- **Description, requirements list:** replace the SKSE/Address Library and runtime lines with:
+  ```
+  [*][url=https://skse.silverlock.org/]SKSE64[/url] for your game version (2.0.20 for 1.5.97) and the All in One file of [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
+  [*]Skyrim SE 1.5.97 or AE 1.6.x / 1.7.x, one file for all. Tested on 1.5.97, 1.6.1170 and 1.7.104. Not for VR.
+  ```
+- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens.
+- **Reply to the 1.5.97 and console commenters** once it's up.
 
 ## Releasing an update
 
