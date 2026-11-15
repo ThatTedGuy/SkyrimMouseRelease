@@ -188,3 +188,5 @@ A fresh read of the code, comments and docs found nothing critical. Fixed, as ap
 - **Docs.** README lists borderless or windowed mode. The testing guide no longer names a personal setup or path, and no longer says spells turn. The pending Nexus notes drop their stale condition and add the turning fix to the 1.1.0 changelog.
 
 **Risks to test:** the Windows cursor stays hidden after menus and loading screens close (the registered message); menus free and return as before.
+
+**Test 16 result (Round 12 build, vanilla 1.7.104):** passed. Pause menu, inventory, console and loading screens free and return the mouse, and no Windows arrow shows in play afterwards. Log: version 1.1.0, no warnings or errors (so the hide-cursor message registered), 12 frees and 11 returns.
