@@ -49,5 +49,5 @@ CommonLibSSE-NG comes from the maintained fork `alandtse/CommonLibVR` (branch `n
 - Zeroed movement applies to every handler of the queued event while released. The character creator, inventory item view and skills menu still turn normally (test 8), so they don't rely on it.
 - If the game window loses focus at the moment a menu closes, restoring exclusive mode fails (`Acquire=0x80070005`); the game rebuilds the mouse device on the next activation and recovers.
 - The menu redraws its cursor only on mouse movement, so position changes show on the next move.
-- Tested only on runtime 1.6.1170. The plugin uses Address Library and declares itself compatible with all AE runtimes, including 1.7.x, where some engine layouts moved (CommonLib accounts for them).
+- Tested only on runtime 1.6.1170. The plugin uses Address Library and declares itself compatible with all AE runtimes, including 1.7.x, where some engine layouts moved (CommonLib accounts for them). Release decision: state 1.7.x as untested rather than block it.
 - Gamepad use in freed menus is untested.
