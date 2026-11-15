@@ -1,6 +1,6 @@
 # Mouse Release
 
-`SkyrimMouseRelease.dll` · by ThatTedGuy · version 1.0.0 · [Nexus Mods](https://www.nexusmods.com/skyrimspecialedition/mods/199209)
+`SkyrimMouseRelease.dll` · by ThatTedGuy · version 1.0.1 · [Nexus Mods](https://www.nexusmods.com/skyrimspecialedition/mods/199209)
 
 An SKSE plugin for Skyrim Special Edition / Anniversary Edition. While you're in a menu, your mouse can leave the game window and work on your other monitors. When you go back to playing, the game takes the mouse back.
 

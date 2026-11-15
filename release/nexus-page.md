@@ -1,6 +1,6 @@
 # Nexus page for Mouse Release
 
-Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0).
+Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Update 1.0.1 prepared 2026-11-15, not yet uploaded.
 
 This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines.
 
@@ -20,10 +20,10 @@ This file records what is on the live page, so it can be rebuilt or updated with
 One Main file, `SkyrimMouseRelease.zip` (`SKSE/Plugins/SkyrimMouseRelease.dll` and `.ini`).
 
 - **Display name:** Mouse Release
-- **File version:** 1.0.0, with "Update mod version to match this file's version" ticked.
+- **File version:** 1.0.1 (first file 1.0.0), with "Update mod version to match this file's version" ticked.
 - **Description:** The plugin and its settings file. Needs SKSE64 and Address Library.
 - **Downloads:** mod manager download on, primary file on. The requirements popup option stays greyed out (it seems to need file-to-file requirements).
-- **Changelog:** Initial release.
+- **Changelog:** 1.0.1: Fixed a timing issue that could leave the Windows cursor showing after a loading screen. 1.0.0: Initial release.
 
 ## Requirements
 

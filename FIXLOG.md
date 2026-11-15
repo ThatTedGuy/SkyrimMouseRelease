@@ -129,3 +129,9 @@ Published on Nexus as mod 199209: https://www.nexusmods.com/skyrimspecialedition
 **Changes**
 - The cursor is hidden after the device is back in exclusive mode and `g_isFree` is cleared, with a private window message (`kHideCursorMessage`) that a real mouse message can't stand in for. *Replaces* the Round 5/6 `g_hideCursorOnce` flag and its branch in the `WM_SETCURSOR` handler, both removed. Posting `WM_SETCURSOR` on free (Round 2/6) is unchanged.
 - New log line: during play (mouse not free), 4 times a second, if the Windows cursor is showing with a shape over the active game window, warn once with its shape and the time since the last return, and note when it hides again. Diagnostic, so another occurrence shows whether this was the cause.
+
+**Test 10 result (Round 8 build, 1.6.1170):** about 45 minutes of normal play: 23 loading screens and 15 pause menu and inventory closes, including one loading screen with the mouse mashed throughout. No arrow during play, no "Windows cursor showing" warning, every return succeeded. Refocus while free and blocking a click on the other screen still work. The original arrow never reproduced on the old build either, so the cause stays unconfirmed; the new warning will say if it comes back.
+
+## Release 1.0.1 (2026-11-15)
+
+Round 8 released. Changelog: fixed a timing issue that could leave the Windows cursor showing after a loading screen.
