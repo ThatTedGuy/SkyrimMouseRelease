@@ -171,3 +171,5 @@ Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that cou
 **Risks to test:** the menu cursor during a drag (it may move a little ahead of the Windows cursor until the button is released); a drag that ends outside the window.
 
 **Test 13 result (Round 11 build, vanilla 1.7.104):** all passed. Items, the character in `showracemenu` and the skills sky turn again. Dragging an item onto the other screen keeps it turning until the button is released out there, then it stops and the mouse works normally. No visible problem with the menu cursor during drags, and no jitter when moving without a button held. Log: no warnings or errors, 26 clicks or scrolls blocked on the other screen.
+
+**Test 14 result (Round 11 build, vanilla 1.5.97):** turning only. Items, the character in `showracemenu` and the skills sky all turn. Log: no warnings or errors. 1.5.97 and 1.7.104 are done; the 1.6.1170 main setup check (SkyUI, RaceMenu, console, play lock) is left before 1.1.0.
