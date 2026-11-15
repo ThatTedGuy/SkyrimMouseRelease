@@ -169,3 +169,5 @@ Round 8 released and uploaded to Nexus. Changelog: fixed a timing issue that cou
 **Change:** movement is no longer zeroed during a left-button drag that started inside the game window, tracked from the queued button events (down inside starts it, release ends it, and freeing or returning the mouse resets it). *Narrows* the Round 2 zeroing rule instead of adding a fix on top of it; outside drags the cursor jitter fix is unchanged. Drags can't start outside the window, because Round 7 blocks presses there.
 
 **Risks to test:** the menu cursor during a drag (it may move a little ahead of the Windows cursor until the button is released); a drag that ends outside the window.
+
+**Test 13 result (Round 11 build, vanilla 1.7.104):** all passed. Items, the character in `showracemenu` and the skills sky turn again. Dragging an item onto the other screen keeps it turning until the button is released out there, then it stops and the mouse works normally. No visible problem with the menu cursor during drags, and no jitter when moving without a button held. Log: no warnings or errors, 26 clicks or scrolls blocked on the other screen.
