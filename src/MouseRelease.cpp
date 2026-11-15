@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 
 namespace
 {
@@ -19,6 +20,9 @@ namespace
 	std::atomic_bool g_needsReapply{ false };  // focus or device reset since the last release
 	std::atomic_bool g_hideCursorOnce{ false };  // next WM_SETCURSOR hides the cursor even if not released
 	std::atomic_bool g_gameCursorShown{ false };  // Skyrim's "Cursor Menu" is open and draws a cursor
+	std::atomic_bool g_retryNow{ false };         // focus came back: retry a failed switch at once
+
+	using Clock = std::chrono::steady_clock;
 
 	// Used only from the Poll hook, which runs once per frame: on the main thread while the pause menu
 	// is open, but on a worker thread during play (the log shows Restore there).
@@ -27,6 +31,9 @@ namespace
 	bool                            g_loggedCursorSpace = false;
 	bool                            g_clipLogged = false;
 	bool                            g_loggedZeroed = false;
+	Clock::time_point               g_nextTry{};       // after a failed switch, wait until then
+	int                             g_failures = 0;    // failed switches in a row
+	int                             g_blockedInputs = 0;  // clicks and scrolls blocked outside the window this time
 
 	HWND    g_window = nullptr;
 	WNDPROC g_originalWndProc = nullptr;
@@ -101,7 +108,7 @@ namespace
 			return;
 		}
 		auto* menuCursor = RE::MenuCursor::GetSingleton();
-		SKSE::log::info("{}: Windows cursor at {}, {} in a {}x{} window; menu cursor at {}, {}",
+		SKSE::log::debug("{}: Windows cursor at {}, {} in a {}x{} window; menu cursor at {}, {}",
 			a_when, point.x, point.y, client.right, client.bottom,
 			menuCursor ? menuCursor->cursorPosX : -1.0f, menuCursor ? menuCursor->cursorPosY : -1.0f);
 	}
@@ -119,7 +126,7 @@ namespace
 		point.y = std::clamp(point.y, 0L, client.bottom - 1);
 		::ClientToScreen(g_window, &point);
 		::SetCursorPos(point.x, point.y);
-		SKSE::log::info("Moved the Windows cursor back into the game window");
+		SKSE::log::debug("Moved the Windows cursor back into the game window");
 	}
 
 	// Asks the game window to set the cursor shape again; the WM_SETCURSOR handler decides which.
@@ -149,24 +156,30 @@ namespace
 		::SetCursorPos(target.x, target.y);
 	}
 
-	void Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
+	bool Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
 	{
-		if (a_reason == "Release") {
+		const bool opening = a_reason == "Release";
+		if (opening) {
 			LogCursorPosition("Menu opened");
+		}
+		if (!ApplyCooperativeLevel(a_mouse, kNonExclusive | kForeground, a_reason)) {
+			return false;
+		}
+		if (opening) {
 			MoveCursorToMenuCursor();
 		}
-		if (ApplyCooperativeLevel(a_mouse, kNonExclusive | kForeground, a_reason)) {
-			::ClipCursor(nullptr);
-			g_releasedDevice = a_mouse->dInputDevice;
-			g_released = true;
-			g_clipLogged = false;
-			// Shared mode shows the Windows cursor in its last shape (often the loading wheel) until the
-			// mouse moves. Set the right shape now; the message runs on the window's own thread.
-			RefreshCursorShape();
-		}
+		::ClipCursor(nullptr);
+		g_releasedDevice = a_mouse->dInputDevice;
+		g_released = true;
+		g_clipLogged = false;
+		g_blockedInputs = 0;
+		// Shared mode shows the Windows cursor in its last shape (often the loading wheel) until the
+		// mouse moves. Set the right shape now; the message runs on the window's own thread.
+		RefreshCursorShape();
+		return true;
 	}
 
-	void Restore(RE::BSWin32MouseDevice* a_mouse)
+	bool Restore(RE::BSWin32MouseDevice* a_mouse)
 	{
 		LogCursorPosition("Menu closed");
 		BringCursorIntoWindow();
@@ -176,13 +189,32 @@ namespace
 		if (!RefreshCursorShape()) {
 			g_hideCursorOnce = false;
 		}
-		if (!ApplyCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Restore")) {
-			SKSE::log::error("Restore failed; trying exclusive + foreground");
-			ApplyCooperativeLevel(a_mouse, kExclusive | kForeground, "Restore fallback");
+		if (!ApplyCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Restore") &&
+			!ApplyCooperativeLevel(a_mouse, kExclusive | kForeground, "Restore fallback")) {
+			return false;  // still released; Reconcile tries again later
+		}
+		if (g_blockedInputs > 0) {
+			SKSE::log::info("Blocked {} clicks or scrolls outside the game window", g_blockedInputs);
 		}
 		g_releasedDevice = nullptr;
 		g_released = false;
 		g_cursorInside = true;
+		return true;
+	}
+
+	// After a failed switch, wait before trying again (1, 2, 4, then every 8 seconds), so a device that
+	// keeps refusing doesn't move the cursor and fill the log every frame. Focus coming back resets it.
+	void NoteSwitchResult(bool a_ok, std::string_view a_what)
+	{
+		if (a_ok) {
+			g_failures = 0;
+			g_nextTry = {};
+			return;
+		}
+		++g_failures;
+		const auto delay = std::chrono::seconds(1 << (std::min)(g_failures - 1, 3));  // parentheses: windows.h defines min
+		g_nextTry = Clock::now() + delay;
+		SKSE::log::warn("{} failed ({} in a row); trying again in {} s", a_what, g_failures, delay.count());
 	}
 
 	// Puts Skyrim's menu cursor where the Windows cursor is. Outside the window it sits on the nearest
@@ -198,7 +230,7 @@ namespace
 		const bool inside = IsInside(point, client);
 		if (inside != g_cursorInside) {
 			g_cursorInside = inside;
-			SKSE::log::info("Cursor {} the game window", inside ? "entered" : "left");
+			SKSE::log::debug("Cursor {} the game window", inside ? "entered" : "left");
 		}
 		point.x = std::clamp(point.x, 0L, client.right - 1);
 		point.y = std::clamp(point.y, 0L, client.bottom - 1);
@@ -213,7 +245,7 @@ namespace
 
 		if (!g_loggedCursorSpace) {
 			g_loggedCursorSpace = true;
-			SKSE::log::info("Menu cursor space: screen {}x{}, safe zone {}x{}, window client {}x{}",
+			SKSE::log::debug("Menu cursor space: screen {}x{}, safe zone {}x{}, window client {}x{}",
 				menuCursor->screenWidthX, menuCursor->screenWidthY, menuCursor->safeZoneX, menuCursor->safeZoneY,
 				client.right, client.bottom);
 		}
@@ -238,10 +270,51 @@ namespace
 			auto* move = static_cast<RE::MouseMoveEvent*>(event);
 			if ((move->mouseInputX != 0 || move->mouseInputY != 0) && !g_loggedZeroed) {
 				g_loggedZeroed = true;
-				SKSE::log::info("Zeroing the game's mouse movement while released (first: {}, {})", move->mouseInputX, move->mouseInputY);
+				SKSE::log::debug("Zeroing the game's mouse movement while released (first: {}, {})", move->mouseInputX, move->mouseInputY);
 			}
 			move->mouseInputX = 0;
 			move->mouseInputY = 0;
+		}
+	}
+
+	// While the cursor is on another screen and Skyrim is still the active window, shared-mode
+	// DirectInput still hands Skyrim the mouse buttons and wheel. Take presses and wheel turns out of
+	// the queue then, so a click or scroll meant for another window does nothing in the menu.
+	// Releases are kept, so a drag that ends outside the window still ends in the menu.
+	void BlockMouseInputOutside()
+	{
+		if (g_cursorInside) {
+			return;
+		}
+		auto* queue = RE::BSInputEventQueue::GetSingleton();
+		if (!queue) {
+			return;
+		}
+		auto&            head = queue->GetQueueHead();
+		auto&            tail = queue->GetQueueTail();
+		RE::InputEvent*  previous = nullptr;
+		RE::InputEvent** link = &head;
+		while (*link) {
+			auto* event = *link;
+			bool  block = false;
+			if (event->GetEventType() == RE::INPUT_EVENT_TYPE::kButton && event->GetDevice() == RE::INPUT_DEVICE::kMouse) {
+				const auto* button = static_cast<RE::ButtonEvent*>(event);
+				const auto  id = button->GetIDCode();
+				const bool  wheel = id == RE::BSWin32MouseDevice::Keys::kWheelUp || id == RE::BSWin32MouseDevice::Keys::kWheelDown;
+				block = wheel || button->IsDown();
+			}
+			if (!block) {
+				previous = event;
+				link = &event->next;
+				continue;
+			}
+			*link = event->next;  // unlink; the event object belongs to the queue's own pool
+			if (tail == event) {
+				tail = previous;
+			}
+			if (g_blockedInputs++ == 0) {
+				SKSE::log::info("Blocking clicks and scrolls while the cursor is outside the game window");
+			}
 		}
 	}
 
@@ -251,12 +324,21 @@ namespace
 		const bool wanted = g_wanted.load();
 		const bool released = g_released.load();
 
+		if (g_retryNow.exchange(false)) {
+			g_nextTry = {};
+		}
+		const bool mayTry = Clock::now() >= g_nextTry;
+
 		if (wanted && !released) {
-			Release(a_mouse, "Release");
+			if (mayTry) {
+				NoteSwitchResult(Release(a_mouse, "Release"), "Freeing the mouse");
+			}
 			return;
 		}
 		if (!wanted && released) {
-			Restore(a_mouse);
+			if (mayTry) {
+				NoteSwitchResult(Restore(a_mouse), "Giving the mouse back to the game");
+			}
 			return;
 		}
 		if (!released) {
@@ -265,10 +347,15 @@ namespace
 
 		if (a_mouse->dInputDevice != g_releasedDevice) {
 			SKSE::log::info("Mouse device changed while released");
+			g_releasedDevice = a_mouse->dInputDevice;
 			g_needsReapply = true;
 		}
-		if (g_needsReapply.exchange(false)) {
-			Release(a_mouse, "Reapply");
+		if (mayTry && g_needsReapply.exchange(false)) {
+			const bool ok = Release(a_mouse, "Reapply");
+			if (!ok) {
+				g_needsReapply = true;
+			}
+			NoteSwitchResult(ok, "Freeing the mouse again");
 		}
 		if (IsCursorClipped()) {
 			if (!g_clipLogged) {
@@ -279,6 +366,7 @@ namespace
 		}
 		SyncMenuCursor();
 		ZeroQueuedMouseMovement();
+		BlockMouseInputOutside();
 	}
 
 	struct PollHook
@@ -296,9 +384,11 @@ namespace
 		static void Thunk(RE::BSWin32MouseDevice* a_this)
 		{
 			func(a_this);
-			SKSE::log::info("Mouse device initialized{}", g_released ? " while released" : "");
 			if (g_released) {
+				SKSE::log::info("Mouse device initialized while released");
 				g_needsReapply = true;
+			} else {
+				SKSE::log::debug("Mouse device initialized");
 			}
 		}
 		static inline REL::Relocation<decltype(Thunk)> func;
@@ -309,9 +399,11 @@ namespace
 		static void Thunk(RE::BSWin32MouseDevice* a_this)
 		{
 			func(a_this);
-			SKSE::log::info("Mouse device reinitialized{}", g_released ? " while released" : "");
 			if (g_released) {
+				SKSE::log::info("Mouse device reinitialized while released");
 				g_needsReapply = true;
+			} else {
+				SKSE::log::debug("Mouse device reinitialized");
 			}
 		}
 		static inline REL::Relocation<decltype(Thunk)> func;
@@ -321,9 +413,12 @@ namespace
 	{
 		switch (a_message) {
 		case WM_ACTIVATEAPP:
-			SKSE::log::info("Game window {}", a_wParam ? "activated" : "deactivated");
-			if (a_wParam && g_wanted) {
-				g_needsReapply = true;
+			SKSE::log::debug("Game window {}", a_wParam ? "activated" : "deactivated");
+			if (a_wParam) {
+				g_retryNow = true;
+				if (g_wanted) {
+					g_needsReapply = true;
+				}
 			}
 			break;
 		case WM_SETCURSOR:

@@ -87,3 +87,16 @@ Log notes for the safety pass:
 - The session ended with the mouse still released (game closed from a menu). Harmless, since Windows releases the device with the process, but worth confirming in the safety pass.
 
 **Decision:** the Tab menu (`TweenMenu`: Skills, Magic, Items, Map) stays locked. The user sees no need, since Esc gives the same freedom, and the map opens from it.
+
+## Round 7 (2026-11-15): safety pass
+
+Code review of all sources; nothing critical. Fixed, as approved:
+
+- **Retry backoff.** A failed release retried every frame, and each try moved the Windows cursor, so a device that kept refusing would pin the cursor and flood the log. Now a failed release, re-apply or restore waits 1, 2, 4, then 8 s; focus coming back retries at once. The cursor moves to the menu's spot only after the release succeeds. A failed restore (both attempts) now keeps the released state and retries instead of giving up. *Replaces* the per-frame retry and the Round 4 move-before-switch order.
+- **Block clicks and scrolls outside.** While the cursor is outside the window and Skyrim is still active, mouse button presses and wheel turns are unlinked from `BSInputEventQueue` (releases kept). Logged once per open, with a count on close. New, next to the Round 2 movement zeroing.
+- **Quieter log.** Unwatched menu events, focus changes, cursor positions, enter/leave, device resets while not released and the first-zeroing line are now debug level; `bVerboseLog=1` turns them back on. *Replaces* logging everything at info.
+- **Minor.** `bReleaseMouse`/`bVerboseLog` accept 0/1/true/false in any case and warn on anything else (was: only `1` or `true`, others silently off).
+
+Not changed: missing Address Library (CommonLib's standard error; list it as a requirement), gamepad (can't be tested here).
+
+**Test 9 result:** pending. To check: everything from test 8 still works; scrolling or clicking on the other monitor while a freed menu is open does nothing in the menu, and the log says how many were blocked; the default log is short.

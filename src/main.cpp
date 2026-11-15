@@ -45,7 +45,11 @@ namespace
 			const auto&            settings = Settings::Get();
 			const bool             watched = settings.IsWatchedMenu(name);
 
-			SKSE::log::info("{} {}{}", name, opening ? "opened" : "closed", watched ? " (watched)" : "");
+			if (watched) {
+				SKSE::log::info("{} {}", name, opening ? "opened" : "closed");
+			} else {
+				SKSE::log::debug("{} {}", name, opening ? "opened" : "closed");
+			}
 
 			if (name == RE::CursorMenu::MENU_NAME) {
 				MouseRelease::SetGameCursorShown(opening);

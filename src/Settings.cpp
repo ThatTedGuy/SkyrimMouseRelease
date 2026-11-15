@@ -3,6 +3,7 @@
 #include "SKSE/SKSE.h"
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <fstream>
 
@@ -37,6 +38,20 @@ namespace
 		}
 		return items;
 	}
+
+	bool ParseBool(std::string_view a_value, bool a_default)
+	{
+		std::string lower(a_value);
+		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		if (lower == "1" || lower == "true") {
+			return true;
+		}
+		if (lower == "0" || lower == "false") {
+			return false;
+		}
+		SKSE::log::warn("'{}' is not 0, 1, true or false; using {}", a_value, a_default);
+		return a_default;
+	}
 }
 
 Settings& Settings::Get()
@@ -66,7 +81,9 @@ void Settings::Load()
 		const auto value = Trim(std::string_view(text).substr(eq + 1));
 
 		if (key == "bReleaseMouse") {
-			releaseMouse = value == "1" || value == "true";
+			releaseMouse = ParseBool(value, releaseMouse);
+		} else if (key == "bVerboseLog") {
+			verboseLog = ParseBool(value, verboseLog);
 		} else if (key == "sMenus") {
 			menus = SplitList(value);
 		} else if (key == "iRestoreFlags") {
@@ -81,7 +98,12 @@ void Settings::Load()
 	for (const auto& menu : menus) {
 		menuList += menuList.empty() ? menu : ", " + menu;
 	}
-	SKSE::log::info("Settings: bReleaseMouse={}, sMenus=[{}], iRestoreFlags={}", releaseMouse, menuList, restoreFlags);
+	if (auto logger = spdlog::default_logger()) {
+		const auto level = verboseLog ? spdlog::level::debug : spdlog::level::info;
+		logger->set_level(level);
+		logger->flush_on(level);
+	}
+	SKSE::log::info("Settings: bReleaseMouse={}, sMenus=[{}], iRestoreFlags={}, bVerboseLog={}", releaseMouse, menuList, restoreFlags, verboseLog);
 }
 
 bool Settings::IsWatchedMenu(std::string_view a_menu) const
