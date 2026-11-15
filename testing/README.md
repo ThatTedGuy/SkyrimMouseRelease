@@ -7,6 +7,13 @@ Vanilla Skyrim installs for testing the plugin on game versions other than the m
 | 1.5.97 | `C:\SkyrimTest\1.5.97` | 2.0.20 | All in one (Special Edition) |
 | 1.7.104 | `C:\SkyrimTest\1.7.104` | the build for 1.7.104 | All in one (Anniversary Edition) |
 
+Run the scripts from the project folder, in a normal (not administrator) PowerShell window. Windows blocks scripts by default, so first allow them for that window only:
+
+```powershell
+cd C:\Users\Ted\Projects\SkyrimMouseRelease
+Set-ExecutionPolicy -Scope Process Bypass -Force
+```
+
 ## Setting one up
 
 1. `./testing/Setup-TestInstall.ps1 -Version 1.5.97`. It opens the Steam console and prints three `download_depot` commands. Paste them one at a time; each takes a while (about 15 GB in all).
