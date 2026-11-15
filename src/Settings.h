@@ -7,7 +7,7 @@
 
 struct Settings
 {
-	bool                     releaseMouse{ false };
+	bool                     releaseMouse{ true };
 	std::vector<std::string> menus{ "Journal Menu" };
 	std::uint32_t            restoreFlags{ 0x5 };  // DISCL_EXCLUSIVE | DISCL_FOREGROUND
 

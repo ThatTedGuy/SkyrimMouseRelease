@@ -29,14 +29,8 @@ namespace
 			SKSE::log::info("{} {}{}", name, opening ? "opened" : "closed", watched ? " (watched)" : "");
 
 			if (watched && settings.releaseMouse) {
-				// Menu events can arrive off the main thread; the input device is polled on it.
-				SKSE::GetTaskInterface()->AddTask([opening]() {
-					if (opening) {
-						MouseRelease::Release();
-					} else {
-						MouseRelease::Restore();
-					}
-				});
+				// Menu events arrive on several threads; the switch happens in the main-thread mouse poll.
+				MouseRelease::SetWanted(opening);
 			}
 
 			return RE::BSEventNotifyControl::kContinue;
@@ -54,6 +48,9 @@ namespace
 		} else {
 			SKSE::log::error("UI not available; menu events are not watched");
 		}
+		if (Settings::Get().releaseMouse) {
+			MouseRelease::InstallWindowHook();
+		}
 	}
 }
 
@@ -63,6 +60,9 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	SKSE::log::info("SkyrimMouseRelease loaded");
 
 	Settings::Get().Load();
+	if (Settings::Get().releaseMouse) {
+		MouseRelease::InstallHooks();
+	}
 
 	if (!SKSE::GetMessagingInterface()->RegisterListener(OnMessage)) {
 		SKSE::log::error("Could not register for SKSE messages");
