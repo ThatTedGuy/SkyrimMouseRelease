@@ -34,7 +34,7 @@ No ESP and nothing in your saves, so it's safe to add or remove anytime. Setting
 Set [i]bVerboseLog=1[/i] in the INI, reproduce the problem, and attach [i]Documents\My Games\Skyrim Special Edition\SKSE\SkyrimMouseRelease.log[/i].
 
 [size=4][b]AI disclosure[/b][/size]
-The code was written by an AI assistant (Claude, by Anthropic). The idea, design decisions and all testing are mine. The source and a log of every test round are on [url=GITHUB_LINK]GitHub[/url] (GPL-3.0).
+The code was written by an AI assistant (Claude, by Anthropic). The idea, design decisions and all testing are mine. The source and a log of every test round are on [url=https://github.com/ThatTedGuy/SkyrimMouseRelease]GitHub[/url] (GPL-3.0).
 
 [size=4][b]Credits[/b][/size]
 The SKSE team, meh321 (Address Library), CommonLibSSE-NG contributors.
