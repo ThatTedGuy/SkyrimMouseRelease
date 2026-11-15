@@ -1,19 +1,19 @@
 # SkyrimMouseRelease
 
-SKSE plugin for Skyrim SE/AE (built for runtime 1.6.1170) that lets the mouse leave the game window while the pause menu is open, so it can move to a second monitor. When the menu closes, the game takes the mouse back.
+SKSE plugin for Skyrim SE/AE (built for runtime 1.6.1170) that lets the mouse leave the game window while a menu is open (by default the pause menu, main menu, character creator, loading screens, inventory, magic and skills), so it can move to a second monitor. When the last of those menus closes, the game takes the mouse back.
 
-Status: working prototype, tested on one setup (1.6.1170, 1920x1080, two monitors). Not yet released. Fix history is in [FIXLOG.md](FIXLOG.md).
+Status: pause menu tested and working on one setup (1.6.1170, 1920x1080, two monitors); saved as tag `v0.1-pause-menu` with its build in `backups/`. The other menus are untested. Not yet released. Fix history is in [FIXLOG.md](FIXLOG.md).
 
 ## How it works
 
 - Skyrim reads the mouse through DirectInput in foreground + exclusive mode, which hides and traps the Windows cursor.
-- The plugin listens for menu open and close events (`MenuOpenCloseEvent`). These arrive on several threads, so the event only sets a "wanted" flag.
+- The plugin listens for menu open and close events (`MenuOpenCloseEvent`) and keeps the set of watched menus that are open; the mouse is wanted free while that set is not empty. Events arrive on several threads, so they only update the set (under a lock) and a "wanted" flag. Watched menus already open when the listener starts (the main menu) are added at that point.
 - A hook on `BSWin32MouseDevice::Poll` (vtable slot 2, once per frame; main thread while paused, a worker thread during play) applies the flag:
   - **Release:** moves the Windows cursor to where Skyrim's menu cursor already is (the game keeps that spot, but the Windows cursor gets centered during play), then switches the game's mouse device (`dInputDevice`) to shared mode (`DISCL_NONEXCLUSIVE | DISCL_FOREGROUND`) and removes any cursor clip.
-  - **Restore:** if the Windows cursor is outside the game window, moves it to the nearest edge spot and resets it to no shape (one-shot `WM_SETCURSOR`), then switches back to `iRestoreFlags` (default exclusive + foreground).
+  - **Restore:** if the Windows cursor is outside the game window, moves it to the nearest edge spot; then resets it to no shape (one-shot `WM_SETCURSOR`) and switches back to `iRestoreFlags` (default exclusive + foreground).
   - **While released:** puts Skyrim's menu cursor (`MenuCursor::cursorPosX/Y`) where the Windows cursor is, or on the nearest window edge while the mouse is outside, and sets the frame's queued mouse movement (`BSInputEventQueue`) to zero so the menu doesn't add it on top. It also removes any cursor clip that reappears and re-applies shared mode after a focus change or a device reset.
 - Hooks on `Initialize` and `Reinitialize` (slots 1 and 9) log device resets and trigger a re-apply while released.
-- The game window procedure is subclassed to log focus changes (`WM_ACTIVATEAPP`) and to hide the Windows cursor over the game while released (`WM_SETCURSOR`), so only one pointer shows: Skyrim's inside the window, Windows' outside it. On release it posts itself a `WM_SETCURSOR` so the Windows cursor is hidden before the mouse first moves.
+- The game window procedure is subclassed to log focus changes (`WM_ACTIVATEAPP`) and to pick the Windows cursor shape over the game while released (`WM_SETCURSOR`), so only one pointer shows: no shape while Skyrim draws its own cursor (`Cursor Menu` open), the arrow when it doesn't (loading screens). On release, on restore, and when `Cursor Menu` opens or closes, it posts itself a `WM_SETCURSOR` so the shape is right before the mouse first moves.
 
 SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the game window again.
 
@@ -22,7 +22,7 @@ SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the
 | Key | Default | Meaning |
 |---|---|---|
 | `bReleaseMouse` | `1` | `1` frees the mouse in watched menus; `0` only logs menu events (no hooks installed). |
-| `sMenus` | `Journal Menu` | Comma-separated menu names that free the mouse. The pause menu is `Journal Menu`. |
+| `sMenus` | `Journal Menu, Main Menu, RaceSex Menu, Loading Menu, InventoryMenu, MagicMenu, StatsMenu` | Comma-separated menu names (case-sensitive) that free the mouse: pause menu, title screen, character creator, loading screens, items, magic, skills. The map (`MapMenu`) is left out on purpose: it scrolls when the cursor sits at the screen edge. |
 | `iRestoreFlags` | `5` | DirectInput flags restored on close (`1` exclusive, `2` non-exclusive, `4` foreground, `8` background). |
 
 ## Log
@@ -44,6 +44,6 @@ CommonLibSSE-NG comes from the maintained fork `alandtse/CommonLibVR` (branch `n
 
 ## Known limits
 
-- Zeroed movement applies to every handler of the queued event while released. Only the watched menus are open then, so nothing else reads it.
+- Zeroed movement applies to every handler of the queued event while released. Menus that turn or pan with mouse movement (character creator, inventory item view, skills) may stop responding to it; untested.
 - The menu redraws its cursor only on mouse movement, so position changes show on the next move.
 - Not yet confirmed: whether a click outside the window while Skyrim is still active reaches the menu.

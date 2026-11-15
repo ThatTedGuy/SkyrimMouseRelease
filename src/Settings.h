@@ -8,7 +8,7 @@
 struct Settings
 {
 	bool                     releaseMouse{ true };
-	std::vector<std::string> menus{ "Journal Menu" };
+	std::vector<std::string> menus{ "Journal Menu", "Main Menu", "RaceSex Menu", "Loading Menu", "InventoryMenu", "MagicMenu", "StatsMenu" };
 	std::uint32_t            restoreFlags{ 0x5 };  // DISCL_EXCLUSIVE | DISCL_FOREGROUND
 
 	static Settings& Get();

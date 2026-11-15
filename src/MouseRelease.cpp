@@ -18,6 +18,7 @@ namespace
 	std::atomic_bool g_released{ false };      // shared mode is active
 	std::atomic_bool g_needsReapply{ false };  // focus or device reset since the last release
 	std::atomic_bool g_hideCursorOnce{ false };  // next WM_SETCURSOR hides the cursor even if not released
+	std::atomic_bool g_gameCursorShown{ false };  // Skyrim's "Cursor Menu" is open and draws a cursor
 
 	// Used only from the Poll hook, which runs once per frame: on the main thread while the pause menu
 	// is open, but on a worker thread during play (the log shows Restore there).
@@ -107,8 +108,6 @@ namespace
 
 	// Exclusive mode leaves the Windows cursor wherever it is. If that is another screen, it stays
 	// visible there during play, so bring it to the edge spot where Skyrim's cursor was pinned.
-	// It still carries the arrow shape from the other screen, and with the game holding the mouse no
-	// message will reset it, so ask the window to set no shape (Skyrim's normal state during play).
 	void BringCursorIntoWindow()
 	{
 		POINT point{};
@@ -120,9 +119,14 @@ namespace
 		point.y = std::clamp(point.y, 0L, client.bottom - 1);
 		::ClientToScreen(g_window, &point);
 		::SetCursorPos(point.x, point.y);
-		g_hideCursorOnce = true;
-		::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
 		SKSE::log::info("Moved the Windows cursor back into the game window");
+	}
+
+	// Asks the game window to set the cursor shape again; the WM_SETCURSOR handler decides which.
+	bool RefreshCursorShape()
+	{
+		return IsCursorOverGame() &&
+		       ::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
 	}
 
 	// The menu keeps its cursor where it was when it last closed, but during play something centers
@@ -157,10 +161,8 @@ namespace
 			g_released = true;
 			g_clipLogged = false;
 			// Shared mode shows the Windows cursor in its last shape (often the loading wheel) until the
-			// mouse moves. Ask the window to hide it now; the message runs on the window's own thread.
-			if (IsCursorOverGame()) {
-				::PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
-			}
+			// mouse moves. Set the right shape now; the message runs on the window's own thread.
+			RefreshCursorShape();
 		}
 	}
 
@@ -168,6 +170,12 @@ namespace
 	{
 		LogCursorPosition("Menu closed");
 		BringCursorIntoWindow();
+		// The cursor may still carry a shape from another screen or a loading screen, and with the game
+		// holding the mouse no message will reset it, so set no shape (Skyrim's normal state in play).
+		g_hideCursorOnce = true;  // set before posting: the window thread may handle it at once
+		if (!RefreshCursorShape()) {
+			g_hideCursorOnce = false;
+		}
 		if (!ApplyCooperativeLevel(a_mouse, Settings::Get().restoreFlags, "Restore")) {
 			SKSE::log::error("Restore failed; trying exclusive + foreground");
 			ApplyCooperativeLevel(a_mouse, kExclusive | kForeground, "Restore fallback");
@@ -320,12 +328,19 @@ namespace
 			break;
 		case WM_SETCURSOR:
 			{
-				// Over the game, only Skyrim's menu cursor should show. The one-shot flag covers the
-				// close after the cursor was brought back from another screen.
+				// Over the game, only one cursor should show: Skyrim's when it draws one, otherwise
+				// (loading screens) the Windows arrow. The one-shot flag hides it when the game takes the
+				// mouse back.
 				const bool hideOnce = g_hideCursorOnce.exchange(false);
-				if ((g_released || hideOnce) && LOWORD(a_lParam) == HTCLIENT) {
-					::SetCursor(nullptr);
-					return TRUE;
+				if (LOWORD(a_lParam) == HTCLIENT) {
+					if (hideOnce || (g_released && g_gameCursorShown)) {
+						::SetCursor(nullptr);
+						return TRUE;
+					}
+					if (g_released) {
+						::SetCursor(::LoadCursorA(nullptr, IDC_ARROW));
+						return TRUE;
+					}
 				}
 			}
 			break;
@@ -366,5 +381,13 @@ namespace MouseRelease
 	void SetWanted(bool a_wanted)
 	{
 		g_wanted = a_wanted;
+	}
+
+	void SetGameCursorShown(bool a_shown)
+	{
+		g_gameCursorShown = a_shown;
+		if (g_released) {
+			RefreshCursorShape();
+		}
 	}
 }

@@ -4,8 +4,27 @@
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 
+#include <mutex>
+#include <set>
+
 namespace
 {
+	// Watched menus that are open right now. A set rather than a counter, so a repeated or missed
+	// event can't leave it off by one; menu events arrive on several threads, hence the lock.
+	std::mutex            g_openLock;
+	std::set<std::string> g_openMenus;
+
+	void SetMenuOpen(std::string_view a_name, bool a_open)
+	{
+		std::scoped_lock lock{ g_openLock };
+		if (a_open) {
+			g_openMenus.emplace(a_name);
+		} else {
+			g_openMenus.erase(std::string{ a_name });
+		}
+		MouseRelease::SetWanted(!g_openMenus.empty());
+	}
+
 	class MenuWatcher final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 	{
 	public:
@@ -28,9 +47,13 @@ namespace
 
 			SKSE::log::info("{} {}{}", name, opening ? "opened" : "closed", watched ? " (watched)" : "");
 
+			if (name == RE::CursorMenu::MENU_NAME) {
+				MouseRelease::SetGameCursorShown(opening);
+			}
+
 			if (watched && settings.releaseMouse) {
-				// Menu events arrive on several threads; the switch happens in the main-thread mouse poll.
-				MouseRelease::SetWanted(opening);
+				// Only sets a flag; the switch itself happens in the mouse poll.
+				SetMenuOpen(name, opening);
 			}
 
 			return RE::BSEventNotifyControl::kContinue;
@@ -45,6 +68,16 @@ namespace
 		if (auto* ui = RE::UI::GetSingleton()) {
 			ui->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatcher::Get());
 			SKSE::log::info("Watching menu events");
+			// A watched menu (the main menu, say) may have opened before this sink existed.
+			MouseRelease::SetGameCursorShown(ui->IsMenuOpen(RE::CursorMenu::MENU_NAME));
+			if (Settings::Get().releaseMouse) {
+				for (const auto& menu : Settings::Get().menus) {
+					if (ui->IsMenuOpen(menu)) {
+						SKSE::log::info("{} was already open", menu);
+						SetMenuOpen(menu, true);
+					}
+				}
+			}
 		} else {
 			SKSE::log::error("UI not available; menu events are not watched");
 		}

@@ -64,3 +64,20 @@ One entry per round of fixes: what changed, why, and what it replaced.
 **Change:** when Round 3's move-back runs, it also sets a one-shot flag and posts `WM_SETCURSOR` to the game window, and the existing handler sets no shape. *Extends* the Round 3 move-back and the Round 2 hide on open (same mechanism); only fires in that case, so other mods' cursors are untouched.
 
 **Test 7 result:** fixed. Three closes from the other screen, each followed by `hidden ... shape 0`; no errors. The 3-second "After close" diagnostic from Round 4 is removed. All reported issues are resolved.
+
+Saved: tag `v0.1-pause-menu` (commit `8db478a`) and its build `backups/SkyrimMouseRelease-8db478a-pause-menu-working.zip`.
+
+## Round 6 (2026-11-14): more menus
+
+New feature, not a fix: the user chose to free the mouse in the main menu, character creator, loading screens, inventory, magic and skills menus as well (not the map, which scrolls at the screen edge).
+
+**Changes**
+- `sMenus` default and the shipped INI list the new menus.
+- One on/off flag *replaced* by the set of watched menus that are open, so closing one (the pause menu while a save loads, say) doesn't take the mouse back while another is still open.
+- Watched menus already open when the listener is registered at `kDataLoaded` (the main menu) are added then. New.
+- Cursor shape over the game while released now depends on whether Skyrim draws its own cursor (`Cursor Menu`): none if it does, the arrow if not (loading screens, which have no cursor). *Replaces* the Round 1 rule "always hide while released".
+- The Round 5 one-shot hide on close now runs on every close, not only after bringing the cursor back from another screen (a loading screen leaves the arrow too). *Extends* Round 5; the shared posting code is one helper.
+
+**Risk to test:** the Round 2 movement zeroing may stop the character creator, inventory item view and skills menu from turning with the mouse.
+
+**Test 8 result:** pending.
