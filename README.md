@@ -9,7 +9,7 @@ Status: prototype. Fix history is in [FIXLOG.md](FIXLOG.md).
 - Skyrim reads the mouse through DirectInput in foreground + exclusive mode, which hides and traps the Windows cursor.
 - The plugin listens for menu open and close events (`MenuOpenCloseEvent`). These arrive on several threads, so the event only sets a "wanted" flag.
 - A hook on `BSWin32MouseDevice::Poll` (vtable slot 2, once per frame; main thread while paused, a worker thread during play) applies the flag:
-  - **Release:** switches the game's mouse device (`dInputDevice`) to shared mode (`DISCL_NONEXCLUSIVE | DISCL_FOREGROUND`) and removes any cursor clip.
+  - **Release:** moves the Windows cursor to where Skyrim's menu cursor already is (the game keeps that spot, but the Windows cursor gets centered during play), then switches the game's mouse device (`dInputDevice`) to shared mode (`DISCL_NONEXCLUSIVE | DISCL_FOREGROUND`) and removes any cursor clip.
   - **Restore:** if the Windows cursor is outside the game window, moves it to the nearest edge spot, then switches back to `iRestoreFlags` (default exclusive + foreground).
   - **While released:** puts Skyrim's menu cursor (`MenuCursor::cursorPosX/Y`) where the Windows cursor is, or on the nearest window edge while the mouse is outside, and sets the frame's queued mouse movement (`BSInputEventQueue`) to zero so the menu doesn't add it on top. It also removes any cursor clip that reappears and re-applies shared mode after a focus change or a device reset.
 - Hooks on `Initialize` and `Reinitialize` (slots 1 and 9) log device resets and trigger a re-apply while released.
@@ -27,7 +27,7 @@ SSE Display Tweaks must have `LockCursor = false`, or it clips the cursor to the
 
 ## Log
 
-`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, the cursor positions at each watched open and close, and the result codes of each mouse mode change.
+`Documents/My Games/Skyrim Special Edition/SKSE/SkyrimMouseRelease.log` lists loaded settings, every menu open and close, the cursor positions at each watched open and close, the Windows cursor's state for 3 seconds after each close (temporary diagnostic), and the result codes of each mouse mode change.
 
 ## Build
 
@@ -45,4 +45,6 @@ CommonLibSSE-NG comes from the maintained fork `alandtse/CommonLibVR` (branch `n
 ## Known limits
 
 - Zeroed movement applies to every handler of the queued event while released. Only the watched menus are open then, so nothing else reads it.
-- Not yet confirmed: whether the menu still redraws its cursor on zero-movement frames, and whether a click outside the window while Skyrim is still active reaches the menu.
+- The menu redraws its cursor only on mouse movement, so position changes show on the next move.
+- Closing the menu while the mouse is on another screen can leave a visible Windows cursor (cause under investigation).
+- Not yet confirmed: whether a click outside the window while Skyrim is still active reaches the menu.

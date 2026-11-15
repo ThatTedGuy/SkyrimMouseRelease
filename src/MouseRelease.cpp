@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 
 namespace
 {
@@ -120,10 +121,59 @@ namespace
 		SKSE::log::info("Moved the Windows cursor back into the game window");
 	}
 
+	// The menu keeps its cursor where it was when it last closed, but during play something centers
+	// the Windows cursor. The menu only redraws its cursor on movement, so without this the first
+	// move after opening jumps it to the center. Moving the Windows cursor to the menu's spot keeps
+	// the game's start position.
+	void MoveCursorToMenuCursor()
+	{
+		POINT point{};
+		RECT  client{};
+		auto* menuCursor = RE::MenuCursor::GetSingleton();
+		if (!menuCursor || menuCursor->screenWidthX <= 0.0f || menuCursor->screenWidthY <= 0.0f || !GetCursorInClient(point, client)) {
+			return;
+		}
+		POINT target{
+			std::clamp(static_cast<LONG>(menuCursor->cursorPosX * static_cast<float>(client.right) / menuCursor->screenWidthX), 0L, client.right - 1),
+			std::clamp(static_cast<LONG>(menuCursor->cursorPosY * static_cast<float>(client.bottom) / menuCursor->screenWidthY), 0L, client.bottom - 1)
+		};
+		::ClientToScreen(g_window, &target);
+		::SetCursorPos(target.x, target.y);
+	}
+
+	// Diagnostics for the stray cursor after closing the menu while on another screen.
+	using Clock = std::chrono::steady_clock;
+	Clock::time_point g_watchUntil{};
+	Clock::time_point g_nextWatchLog{};
+
+	void WatchCursorAfterClose()
+	{
+		const auto now = Clock::now();
+		if (now >= g_watchUntil || now < g_nextWatchLog) {
+			return;
+		}
+		g_nextWatchLog = now + std::chrono::milliseconds(250);
+
+		CURSORINFO info{ sizeof(CURSORINFO) };
+		if (!::GetCursorInfo(&info)) {
+			return;
+		}
+		POINT client = info.ptScreenPos;
+		if (g_window) {
+			::ScreenToClient(g_window, &client);
+		}
+		SKSE::log::info("After close: Windows cursor {} at {}, {} (window {}, {}), shape {}, game window {}",
+			(info.flags & CURSOR_SHOWING) ? "showing" : "hidden",
+			info.ptScreenPos.x, info.ptScreenPos.y, client.x, client.y,
+			reinterpret_cast<std::uintptr_t>(info.hCursor),
+			::GetForegroundWindow() == g_window ? "active" : "not active");
+	}
+
 	void Release(RE::BSWin32MouseDevice* a_mouse, std::string_view a_reason)
 	{
 		if (a_reason == "Release") {
 			LogCursorPosition("Menu opened");
+			MoveCursorToMenuCursor();
 		}
 		if (ApplyCooperativeLevel(a_mouse, kNonExclusive | kForeground, a_reason)) {
 			::ClipCursor(nullptr);
@@ -149,6 +199,8 @@ namespace
 		g_releasedDevice = nullptr;
 		g_released = false;
 		g_cursorInside = true;
+		g_watchUntil = Clock::now() + std::chrono::seconds(3);
+		g_nextWatchLog = {};
 	}
 
 	// Puts Skyrim's menu cursor where the Windows cursor is. Outside the window it sits on the nearest
@@ -226,6 +278,7 @@ namespace
 			return;
 		}
 		if (!released) {
+			WatchCursorAfterClose();
 			return;
 		}
 

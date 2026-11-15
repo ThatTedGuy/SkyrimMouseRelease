@@ -47,4 +47,12 @@ One entry per round of fixes: what changed, why, and what it replaced.
 - The log records the Windows cursor and menu cursor positions at every open and close. New, to find what centers the cursor. The user chose to leave the start position to the game.
 - Comments and README corrected: the Poll hook runs on the main thread while paused and on a worker thread during play.
 
-**Test 5 result:** pending. To check: Esc while on the other screen leaves no stray cursor; the log shows where the cursor is at each open.
+**Test 5 result:** stray cursor after Esc on the other screen still happens, although the log shows the move back into the window ran and the restore succeeded. Cause still unknown; once the Windows cursor was 750 px from where the plugin put it at the next open, so something moved it during play. The center jump is explained: at every open the Windows cursor is at 960, 540 (centered during play by something else) while Skyrim's menu cursor is still where it closed. The menu draws its cursor at the old spot and only redraws on movement, so the first move jumps to the synced center.
+
+## Round 4 (2026-11-14): start where the menu left off; watch the cursor after close
+
+**Changes**
+- On menu open (not on refocus), the Windows cursor is moved to where Skyrim's menu cursor is, so the sync starts from the game's own spot. New. The menu redrawing only on movement is the reason the Round 2 zeroing doesn't hide the jump; Round 2 is unchanged.
+- For 3 seconds after each close, the log records every 250 ms whether the Windows cursor is showing, its position, its shape handle, and whether the game window is active. Diagnostic only, for the stray cursor; no fix until the cause is known. The Round 3 move-back stays.
+
+**Test 6 result:** pending. To check: no jump to center on the first move after reopening; for the stray cursor, the "After close" lines plus an F12 screenshot.
