@@ -190,3 +190,7 @@ A fresh read of the code, comments and docs found nothing critical. Fixed, as ap
 **Risks to test:** the Windows cursor stays hidden after menus and loading screens close (the registered message); menus free and return as before.
 
 **Test 16 result (Round 12 build, vanilla 1.7.104):** passed. Pause menu, inventory, console and loading screens free and return the mouse, and no Windows arrow shows in play afterwards. Log: version 1.1.0, no warnings or errors (so the hide-cursor message registered), 12 frees and 11 returns.
+
+## Release 1.1.0 (2026-11-15)
+
+Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the build tested in test 16 (tag `v1.1.0`). The description, file description, requirement notes and changelog were updated for 1.5.97 support, the console and the play lock; [release/nexus-page.md](release/nexus-page.md) records the live page.

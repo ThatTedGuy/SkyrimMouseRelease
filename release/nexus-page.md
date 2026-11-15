@@ -1,8 +1,8 @@
 # Nexus page for Mouse Release
 
-Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1 on 2026-11-15.
+Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1 and then 1.1.0 on 2026-11-15.
 
-This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines. (Until 1.1.0 is live, the block holds the 1.1.0 text.)
+This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines.
 
 ## Page settings as published
 
@@ -20,18 +20,21 @@ This file records what is on the live page, so it can be rebuilt or updated with
 One Main file, `SkyrimMouseRelease.zip` (`SKSE/Plugins/SkyrimMouseRelease.dll` and `.ini`).
 
 - **Display name:** Mouse Release
-- **File version:** 1.0.1 (first file 1.0.0), with "Update mod version to match this file's version" ticked.
-- **Description:** The plugin and its settings file. Needs SKSE64 and Address Library.
+- **Upload type:** "Update existing file" on the previous version, with "Archive existing file" ticked, so mod managers offer it as an update.
+- **File version:** 1.1.0 (1.0.1 archived with this upload), with "Update mod version to match this file's version" ticked.
+- **Description:** The plugin and its settings file. One file for 1.5.97, 1.6 and 1.7. Needs SKSE64 for your game version (2.0.20 for 1.5.97) and Address Library's All in One file.
 - **Downloads:** mod manager download on, primary file on. The requirements popup option stays greyed out (it seems to need file-to-file requirements).
-- **Changelog:** 1.0.1: Fixed a timing issue that could leave the Windows cursor showing after a loading screen. 1.0.0: Initial release.
+- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus. 1.0.1: Fixed a timing issue that could leave the Windows cursor showing after a loading screen. 1.0.0: Initial release.
 
 ## Requirements
 
 Mod requirements (legacy), not file-to-file, so they don't need relinking when the other mods update:
 
-- Address Library for SKSE Plugins (Nexus), note: Get the "All in one (Anniversary Edition)" file.
-- Skyrim Script Extender (SKSE64) (Nexus)
-- No external resources, no DLC. Don't tick "Anniversary Upgrade": the mod needs the 1.6+ runtime, not the paid Creation Club bundle.
+- Address Library for SKSE Plugins (Nexus), note: Get the All in One file. It covers every game version, 1.5.97 included.
+- Skyrim Script Extender (SKSE64) (Nexus), note: Use the build for your game version
+- No external resources, no DLC. Don't tick "Anniversary Upgrade": the mod doesn't need the paid Creation Club bundle on any version.
+
+Requirements belong to the whole mod, not to a file, so version details (SKSE 2.0.20 for 1.5.97) go in the notes and the description, not in a separate file.
 
 ## Permissions
 
@@ -40,31 +43,13 @@ Mod requirements (legacy), not file-to-file, so they don't need relinking when t
 - **Permission settings:** Write your own (custom). Nexus's recommended settings (no re-upload, ask before modifying) conflict with the GPL. Text:
   > Licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). You may modify, convert, re-upload and reuse this mod, as long as your version keeps the same license and you publish its source code. Source and full license: https://github.com/ThatTedGuy/SkyrimMouseRelease
 
-## Pending for 1.1.0
-
-Every test has passed (tests 11 to 15). Apply these with the 1.1.0 upload.
-
-**What 1.5.97 users need.** The same one file as everyone else, plus:
-- **SKSE 2.0.20**, the last SKSE build for 1.5.97. It's on [skse.silverlock.org](https://skse.silverlock.org/) under the older builds, not on the SKSE Nexus page's main files.
-- **Address Library: the "All in One" file.** It covers every version from 1.5.97 to 1.7.104, so it's the same download for all users.
-
-**Where that goes, given Nexus's limits.** Nexus requirements belong to the whole mod, not to a file, and a separate 1.5.97 file isn't needed. Both requirements (SKSE and Address Library) apply to every version; only the SKSE build differs. So the version detail goes in the requirement notes and the text:
-
-- **Requirements tab, SKSE64 note:** "Use the build for your game version. 1.5.97: SKSE 2.0.20 from skse.silverlock.org."
-- **Requirements tab, Address Library note:** "Get the All in One file. It covers every game version, 1.5.97 included." (The live note names the old Anniversary Edition file, which Nexus has archived.)
-- **Requirements tab, Anniversary Upgrade:** still unticked. The reason changes: the mod doesn't need the paid Creation Club bundle on any version.
-- **File description:** "The plugin and its settings file. One file for 1.5.97, 1.6 and 1.7. Needs SKSE64 for your game version (2.0.20 for 1.5.97) and Address Library's All in One file."
-- **Description:** replace the whole description with the copy block at the end of this file (already updated for 1.1.0: the console, the play lock, the new requirement and version lines).
-- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus.
-- **Reply to the 1.5.97 and console commenters** once it's up.
-
 ## Releasing an update
 
 1. Change the version in `CMakeLists.txt` (`project(... VERSION x.y.z)`) and `vcpkg.json`, and in the README's header line.
 2. Build with `./build.ps1`, test in game, and add a FIXLOG entry.
 3. Commit, tag `vx.y.z`, push the commit and the tag.
 4. On Nexus, upload the new zip as a Main file with the same version and a changelog line. Archive the old file or move it to Old.
-5. Apply everything under "Pending for x.y.z" above (requirement notes, file description, description text), then move it into the page settings and description sections so this file matches the live page again.
+5. Update the requirement notes, file description and description to match, and record them here so this file matches the live page. While preparing a release, list the page changes under a "Pending for x.y.z" heading above this section, and remove it once they are live.
 
 ----- copy -----
 [size=5][b]Mouse Release[/b][/size]
