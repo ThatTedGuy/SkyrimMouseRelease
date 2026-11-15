@@ -33,6 +33,8 @@ If Steam answers "Manifest not available" for 1.5.97, use the Skyrim Downgrade P
 4. Moves the test game's profile folders to `C:\SkyrimTest\runs\<version>-<time>\` and renames the originals back, even if the game crashes.
 5. Prints where the plugin log is and whether it has warnings.
 
+Add `-VerboseLog` for the detailed log (cursor positions, focus changes), or `-PluginOff` to run with `bReleaseMouse=0` and compare with how the game behaves without the plugin.
+
 If the script was stopped before restoring (PowerShell closed, PC restarted), run `./testing/Run-Test.ps1 -RestoreOnly` before starting Vortex or the main game.
 
 ## What to test

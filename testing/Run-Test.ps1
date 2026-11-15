@@ -10,7 +10,9 @@
 param(
     [ValidateSet('1.5.97', '1.7.104')][string]$Version,
     [string]$Root = 'C:\SkyrimTest',
-    [switch]$RestoreOnly
+    [switch]$RestoreOnly,
+    [switch]$VerboseLog,  # bVerboseLog=1 for this run
+    [switch]$PluginOff    # bReleaseMouse=0 for this run, to compare with the plugin's behavior
 )
 $ErrorActionPreference = 'Stop'
 
@@ -61,6 +63,11 @@ if (-not (Test-Path (Join-Path $built 'SkyrimMouseRelease.dll'))) { throw 'No bu
 # Newest build into the test install, every run.
 Copy-Item (Join-Path $built '*') (Join-Path $install 'Data\SKSE\Plugins') -Force
 Write-Host "Installed $((Get-Item (Join-Path $built 'SkyrimMouseRelease.dll')).LastWriteTime) build"
+$ini = Join-Path $install 'Data\SKSE\Plugins\SkyrimMouseRelease.ini'
+$lines = Get-Content $ini
+if ($VerboseLog) { $lines = $lines -replace '^bVerboseLog=.*', 'bVerboseLog=1'; Write-Host 'Detailed log on' }
+if ($PluginOff) { $lines = $lines -replace '^bReleaseMouse=.*', 'bReleaseMouse=0'; Write-Host 'Plugin OFF for this run' }
+Set-Content $ini $lines
 
 # Hold the main setup's profile folders.
 $renamed = @()
