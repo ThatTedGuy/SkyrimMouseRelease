@@ -228,3 +228,7 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 **To test:** a couple of menus and a drag-turn, to confirm nothing changed in behavior.
 
 **Test 20 result (cleanup build, version 1.1.1, vanilla 1.5.97):** passed. Main menu, console, inventory, pause menu and journal free and return the mouse; no menu cursor jitter. Log: version 1.1.1, "Movement filter installed, first of 5 input handlers", no warnings or errors.
+
+## Release 1.1.1 (2026-11-15)
+
+Uploaded to Nexus as an update of the 1.1.0 file (1.1.0 archived), from the build tested in test 20 (tag `v1.1.1`). Changelog: "compatibility with Wheeler, can assign items from the inventory again." The description, file description and requirements are unchanged; [release/nexus-page.md](release/nexus-page.md) records the live page.

@@ -1,6 +1,6 @@
 # Nexus page for Mouse Release
 
-Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1 and then 1.1.0 on 2026-11-15.
+Published 2026-11-15: https://www.nexusmods.com/skyrimspecialedition/mods/199209 (version 1.0.0). Updated to 1.0.1, 1.1.0 and 1.1.1 on 2026-11-15.
 
 This file records what is on the live page, so it can be rebuilt or updated without guessing. The description is in BBCode (Nexus's format): copy everything between the two `----- copy -----` lines.
 
@@ -21,10 +21,10 @@ One Main file, `SkyrimMouseRelease.zip` (`SKSE/Plugins/SkyrimMouseRelease.dll` a
 
 - **Display name:** Mouse Release
 - **Upload type:** "Update existing file" on the previous version, with "Archive existing file" ticked, so mod managers offer it as an update.
-- **File version:** 1.1.0 (1.0.1 archived with this upload), with "Update mod version to match this file's version" ticked.
+- **File version:** 1.1.1 (1.1.0 archived with this upload), with "Update mod version to match this file's version" ticked.
 - **Description:** The plugin and its settings file. One file for 1.5.97, 1.6 and 1.7. Needs SKSE64 for your game version (2.0.20 for 1.5.97) and Address Library's All in One file.
 - **Downloads:** mod manager download on, primary file on. The requirements popup option stays greyed out (it seems to need file-to-file requirements).
-- **Changelog:** 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus. 1.0.1: Fixed a timing issue that could leave the Windows cursor showing after a loading screen. 1.0.0: Initial release.
+- **Changelog:** 1.1.1: compatibility with Wheeler, can assign items from the inventory again. 1.1.0: Frees the mouse in the console too. One file now works on 1.5.97 as well as 1.6 and 1.7. During play, the hidden cursor stays inside the game window, so scrolling can't reach your other screens. Items, the character and the skills sky can be turned with the mouse again in the vanilla menus. 1.0.1: Fixed a timing issue that could leave the Windows cursor showing after a loading screen. 1.0.0: Initial release.
 
 ## Requirements
 
