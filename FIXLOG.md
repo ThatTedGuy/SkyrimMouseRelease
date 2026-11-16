@@ -216,3 +216,5 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 **Risks to test:** jitter and drag turning in vanilla (the zeroing must still reach the menu); Wheeler slot picking in the inventory, tested in the main setup because Wheeler 1.2 didn't work in the vanilla 1.5.97 copy.
 
 **Test 18 result (Round 14 build, vanilla 1.5.97):** passed. No menu cursor jitter (main menu, pause menu, inventory); dragging still turns items and the skills sky. Log: "Movement filter installed, first of 5 input handlers", no warnings or errors. Wheeler still to test in the main setup.
+
+**Test 19 result (Round 14 build, main setup 1.6.1170 with Wheeler 1.2 added through Vortex):** passed. In the inventory, Wheeler's edit mode opened, new slots highlighted as the mouse moved toward them, and left-click put the hovered item in. No menu cursor jitter, items still turn. Log: "Movement filter installed, first of 18 input handlers" (the main setup's mods add more handlers), no warnings or errors. The Wheeler report is fixed in code; the INI workaround is no longer needed.
