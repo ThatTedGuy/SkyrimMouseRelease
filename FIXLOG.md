@@ -197,7 +197,7 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 
 ## Round 13 (2026-11-15): stop zeroing mouse movement; re-sync after input instead
 
-**Reported on Nexus (sholdsf):** with Mouse Release, Wheeler can't assign items from the inventory. Wheeler's source (github.com/D7ry/wheeler, `Input.cpp`) moves its slot pointer only from the mouse movement events (`MouseMoveEvent::mouseInputX/Y`), read in its hook on the game's input dispatch. Mouse Release zeroes those events in its Poll hook while a menu has the mouse free (Round 2), so Wheeler's pointer never moves. Wheeler is an ImGui overlay, not a Skyrim menu, and exposes no open state, so it can't be detected and excepted.
+**Reported on Nexus:** with Mouse Release, Wheeler can't assign items from the inventory. Wheeler's source (github.com/D7ry/wheeler, `Input.cpp`) moves its slot pointer only from the mouse movement events (`MouseMoveEvent::mouseInputX/Y`), read in its hook on the game's input dispatch. Mouse Release zeroes those events in its Poll hook while a menu has the mouse free (Round 2), so Wheeler's pointer never moves. Wheeler is an ImGui overlay, not a Skyrim menu, and exposes no open state, so it can't be detected and excepted.
 
 **Why a different approach:** the zeroing has now broken two things (vanilla turning, fixed in Round 11 with a drag exception, and Wheeler). Per the no-piled-fixes rule, the zeroing is replaced instead of adding another exception. Approved by the user.
 
