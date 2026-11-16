@@ -226,3 +226,5 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 - Testing guide: mods that don't run in a vanilla copy (Wheeler 1.2) are tested in the main setup, without saving.
 
 **To test:** a couple of menus and a drag-turn, to confirm nothing changed in behavior.
+
+**Test 20 result (cleanup build, version 1.1.1, vanilla 1.5.97):** passed. Main menu, console, inventory, pause menu and journal free and return the mouse; no menu cursor jitter. Log: version 1.1.1, "Movement filter installed, first of 5 input handlers", no warnings or errors.
