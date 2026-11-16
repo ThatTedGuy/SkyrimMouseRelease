@@ -56,14 +56,16 @@ namespace
 	std::atomic_bool g_gameCursorShown{ false };  // Skyrim draws its own cursor ("Cursor Menu" is open)
 	std::atomic_bool g_lockedInPlay{ false };     // we confined the cursor to the window for play
 
+	// Shared by the Poll hook and MovementFilter, which runs during the input hand-out after Poll.
+	std::atomic_bool g_cursorInside{ true };  // the Windows cursor is over the game window
+	std::atomic_bool g_dragging{ false };     // left button pressed inside the window, not yet released
+
 	// Posted to the game window after the mouse goes back to the game: hide the Windows cursor.
 	// Registered with Windows, so no other message the game window gets can have the same number.
 	UINT g_hideCursorMessage = 0;
 
 	// Used only from the Poll hook (one call per frame, so never concurrently).
 	REX::W32::IDirectInputDevice8A* g_freeDevice = nullptr;  // the device we switched, to notice a new one
-	bool                            g_cursorInside = true;
-	bool                            g_dragging = false;  // left button pressed inside the window, not yet released
 	bool                            g_clipLogged = false;
 	int                             g_blockedInputs = 0;  // clicks and scrolls dropped during this menu visit
 	int                             g_failures = 0;       // failed switches in a row

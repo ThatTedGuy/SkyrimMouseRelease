@@ -218,3 +218,11 @@ Uploaded to Nexus as an update of the 1.0.1 file (1.0.1 archived), from the buil
 **Test 18 result (Round 14 build, vanilla 1.5.97):** passed. No menu cursor jitter (main menu, pause menu, inventory); dragging still turns items and the skills sky. Log: "Movement filter installed, first of 5 input handlers", no warnings or errors. Wheeler still to test in the main setup.
 
 **Test 19 result (Round 14 build, main setup 1.6.1170 with Wheeler 1.2 added through Vortex):** passed. In the inventory, Wheeler's edit mode opened, new slots highlighted as the mouse moved toward them, and left-click put the hovered item in. No menu cursor jitter, items still turn. Log: "Movement filter installed, first of 18 input handlers" (the main setup's mods add more handlers), no warnings or errors. The Wheeler report is fixed in code; the INI workaround is no longer needed.
+
+## Cleanup (2026-11-15): after Round 14
+
+- `g_cursorInside` and `g_dragging` are now `std::atomic_bool`. Both are shared by the Poll hook and `MovementFilter`; the filter very likely runs right after Poll on the same thread, but this makes it safe either way. The comment that called them Poll-only is corrected.
+- README "How it works": the movement is cancelled before the menus get it, so mods that read it earlier (Wheeler) still work.
+- Testing guide: mods that don't run in a vanilla copy (Wheeler 1.2) are tested in the main setup, without saving.
+
+**To test:** a couple of menus and a drag-turn, to confirm nothing changed in behavior.

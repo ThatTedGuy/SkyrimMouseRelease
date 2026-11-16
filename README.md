@@ -34,7 +34,7 @@ The mouse is freed in the pause menu, main menu, character creator, loading scre
 
 Skyrim reads the mouse through DirectInput in exclusive mode, which hides the Windows cursor and keeps it in the game. While one of the menus above is open, the plugin switches the game's mouse to shared mode, so the Windows cursor can move anywhere. When the last of those menus closes, it switches back.
 
-Shared mode on its own would show two cursors that drift apart. So every frame while the mouse is free, the plugin puts Skyrim's cursor where the Windows cursor is, cancels the game's own mouse movement, and ignores clicks and scrolling while the cursor is on another screen. It also hides whichever cursor shouldn't show, and frees the mouse again whenever the game rebuilds its mouse device (which it does every time the window gets focus back).
+Shared mode on its own would show two cursors that drift apart. So every frame while the mouse is free, the plugin puts Skyrim's cursor where the Windows cursor is, cancels the game's own mouse movement before the menus get it (mods that read it earlier, like Wheeler, still do), and ignores clicks and scrolling while the cursor is on another screen. It also hides whichever cursor shouldn't show, and frees the mouse again whenever the game rebuilds its mouse device (which it does every time the window gets focus back).
 
 The code is in [src/](src): [main.cpp](src/main.cpp) watches menus, [MouseRelease.cpp](src/MouseRelease.cpp) does all the mouse work (its top comment is a more detailed overview), and [Settings.cpp](src/Settings.cpp) reads the INI. [FIXLOG.md](FIXLOG.md) records every round of fixes and why. [testing/](testing/README.md) sets up vanilla test installs for other game versions.
 

@@ -35,6 +35,8 @@ If Steam answers "Manifest not available" for 1.5.97, use the Skyrim Downgrade P
 
 Add `-VerboseLog` for the detailed log (cursor positions, focus changes), or `-PluginOff` to run with `bReleaseMouse=0` and compare with how the game behaves without the plugin.
 
+Some mods don't run in a vanilla copy (Wheeler 1.2 didn't, even without this plugin). Test those in your main setup instead: add them as their own mod in your mod manager, and don't save during the test.
+
 If the script was stopped before restoring (PowerShell closed, PC restarted), run `./testing/Run-Test.ps1 -RestoreOnly` before starting Vortex or the main game.
 
 ## What to test
